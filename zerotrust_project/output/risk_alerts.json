@@ -1,0 +1,42 @@
+[
+  {
+    "timestamp": "2026-08-23T02:01:53.781485",
+    "conn_id": "C0031",
+    "risk_type": "CROSS_SEGMENT_ACCESS",
+    "risk_level": "HIGH",
+    "confidence_score": 0.9,
+    "evidence": "Device in 'guest' segment (192.168.10.14) directly contacted 'server' segment device (192.168.30.21) on port 443 \u2014 this segment should never reach production servers directly.",
+    "src_ip": "192.168.10.14",
+    "dst_ip": "192.168.30.21"
+  },
+  {
+    "timestamp": "2026-08-23T02:01:55.781485",
+    "conn_id": "C0032",
+    "risk_type": "CROSS_SEGMENT_ACCESS",
+    "risk_level": "HIGH",
+    "confidence_score": 0.9,
+    "evidence": "Device in 'iot' segment (192.168.40.170) directly contacted 'server' segment device (192.168.30.133) on port 22 \u2014 this segment should never reach production servers directly.",
+    "src_ip": "192.168.40.170",
+    "dst_ip": "192.168.30.133"
+  },
+  {
+    "timestamp": "2026-08-23T02:01:55.781485",
+    "conn_id": "C0032",
+    "risk_type": "UNEXPECTED_SERVICE_ACCESS",
+    "risk_level": "HIGH",
+    "confidence_score": 0.85,
+    "evidence": "Device '192.168.40.170' (type: printer) attempted port 22 on 192.168.30.133 \u2014 this is an administrative port that a printer should never use. Possible sign of compromise/lateral movement.",
+    "src_ip": "192.168.40.170",
+    "dst_ip": "192.168.30.133"
+  },
+  {
+    "timestamp": "2026-08-23T02:01:50.425838",
+    "conn_id": "C0030",
+    "risk_type": "FAN_OUT_LATERAL_MOVEMENT",
+    "risk_level": "MEDIUM",
+    "confidence_score": 0.7,
+    "evidence": "Source 192.168.20.20 connected to 6 distinct destination devices \u2014 unusually broad access pattern, possible reconnaissance or lateral movement.",
+    "src_ip": "192.168.20.20",
+    "dst_ip": null
+  }
+]

@@ -1,0 +1,66 @@
+[
+  {
+    "policy_id": "POL-C0031",
+    "generated_at": "2026-08-23T02:04:57.863398",
+    "based_on_alert": "CROSS_SEGMENT_ACCESS",
+    "risk_level": "HIGH",
+    "target": {
+      "src_ip": "192.168.10.14",
+      "dst_ip": "192.168.30.21"
+    },
+    "action": "BLOCK",
+    "iptables_rule": "iptables -A FORWARD -s 192.168.10.14 -d 192.168.30.21 -j DROP",
+    "nftables_rule": "nft add rule inet filter forward ip saddr 192.168.10.14 ip daddr 192.168.30.21 drop",
+    "explanation": "Blocks all traffic from 192.168.10.14 to 192.168.30.21 specifically.",
+    "evidence": "Device in 'guest' segment (192.168.10.14) directly contacted 'server' segment device (192.168.30.21) on port 443 \u2014 this segment should never reach production servers directly.",
+    "status": "SUGGESTED \u2014 requires human review before deployment"
+  },
+  {
+    "policy_id": "POL-C0032",
+    "generated_at": "2026-08-23T02:04:57.863398",
+    "based_on_alert": "CROSS_SEGMENT_ACCESS",
+    "risk_level": "HIGH",
+    "target": {
+      "src_ip": "192.168.40.170",
+      "dst_ip": "192.168.30.133"
+    },
+    "action": "BLOCK",
+    "iptables_rule": "iptables -A FORWARD -s 192.168.40.170 -d 192.168.30.133 -j DROP",
+    "nftables_rule": "nft add rule inet filter forward ip saddr 192.168.40.170 ip daddr 192.168.30.133 drop",
+    "explanation": "Blocks all traffic from 192.168.40.170 to 192.168.30.133 specifically.",
+    "evidence": "Device in 'iot' segment (192.168.40.170) directly contacted 'server' segment device (192.168.30.133) on port 22 \u2014 this segment should never reach production servers directly.",
+    "status": "SUGGESTED \u2014 requires human review before deployment"
+  },
+  {
+    "policy_id": "POL-C0032",
+    "generated_at": "2026-08-23T02:04:57.863398",
+    "based_on_alert": "UNEXPECTED_SERVICE_ACCESS",
+    "risk_level": "HIGH",
+    "target": {
+      "src_ip": "192.168.40.170",
+      "dst_ip": "192.168.30.133"
+    },
+    "action": "BLOCK",
+    "iptables_rule": "iptables -A FORWARD -s 192.168.40.170 -d 192.168.30.133 -j DROP",
+    "nftables_rule": "nft add rule inet filter forward ip saddr 192.168.40.170 ip daddr 192.168.30.133 drop",
+    "explanation": "Blocks all traffic from 192.168.40.170 to 192.168.30.133 specifically.",
+    "evidence": "Device '192.168.40.170' (type: printer) attempted port 22 on 192.168.30.133 \u2014 this is an administrative port that a printer should never use. Possible sign of compromise/lateral movement.",
+    "status": "SUGGESTED \u2014 requires human review before deployment"
+  },
+  {
+    "policy_id": "POL-C0030",
+    "generated_at": "2026-08-23T02:04:57.863398",
+    "based_on_alert": "FAN_OUT_LATERAL_MOVEMENT",
+    "risk_level": "MEDIUM",
+    "target": {
+      "src_ip": "192.168.20.20",
+      "dst_ip": null
+    },
+    "action": "RATE_LIMIT",
+    "iptables_rule": "iptables -A FORWARD -s 192.168.20.20 -m limit --limit 5/min -j ACCEPT\niptables -A FORWARD -s 192.168.20.20 -j DROP",
+    "nftables_rule": "nft add rule inet filter forward ip saddr 192.168.20.20 limit rate 5/minute accept",
+    "explanation": "Rate-limits source due to FAN_OUT_LATERAL_MOVEMENT pattern (no single destination).",
+    "evidence": "Source 192.168.20.20 connected to 6 distinct destination devices \u2014 unusually broad access pattern, possible reconnaissance or lateral movement.",
+    "status": "SUGGESTED \u2014 requires human review before deployment"
+  }
+]
