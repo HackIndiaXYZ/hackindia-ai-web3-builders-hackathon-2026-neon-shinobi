@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Zero-Trust Micro-Segmentation Visualizer - Aegis</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-high": "#1c2b3c",
+                        "on-tertiary-fixed": "#2a1700",
+                        "on-secondary-fixed": "#410004",
+                        "on-secondary": "#68000a",
+                        "on-primary-fixed": "#001a42",
+                        "secondary-container": "#a40217",
+                        "on-secondary-fixed-variant": "#930013",
+                        "primary-container": "#4d8eff",
+                        "on-primary-fixed-variant": "#004395",
+                        "background": "#051424",
+                        "primary-fixed-dim": "#adc6ff",
+                        "error-container": "#93000a",
+                        "inverse-primary": "#005ac2",
+                        "tertiary": "#ffb95f",
+                        "surface-bright": "#2c3a4c",
+                        "surface-container-highest": "#273647",
+                        "on-tertiary-container": "#3e2400",
+                        "on-surface-variant": "#c2c6d6",
+                        "error": "#ffb4ab",
+                        "outline-variant": "#424754",
+                        "on-tertiary-fixed-variant": "#653e00",
+                        "secondary-fixed": "#ffdad7",
+                        "tertiary-container": "#ca8100",
+                        "on-tertiary": "#472a00",
+                        "surface": "#051424",
+                        "surface-container-lowest": "#010f1f",
+                        "surface-container": "#122131",
+                        "tertiary-fixed": "#ffddb8",
+                        "on-primary-container": "#00285d",
+                        "surface-container-low": "#0d1c2d",
+                        "secondary-fixed-dim": "#ffb3ad",
+                        "primary-fixed": "#d8e2ff",
+                        "outline": "#8c909f",
+                        "on-error": "#690005",
+                        "surface-tint": "#adc6ff",
+                        "on-primary": "#002e6a",
+                        "secondary": "#ffb3ad",
+                        "on-background": "#d4e4fa",
+                        "on-error-container": "#ffdad6",
+                        "surface-variant": "#273647",
+                        "on-secondary-container": "#ffaea8",
+                        "surface-dim": "#051424",
+                        "inverse-on-surface": "#233143",
+                        "primary": "#adc6ff",
+                        "tertiary-fixed-dim": "#ffb95f",
+                        "on-surface": "#d4e4fa",
+                        "inverse-surface": "#d4e4fa"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "margin-mobile": "16px",
+                        "lg": "40px",
+                        "margin-desktop": "32px",
+                        "xs": "8px",
+                        "gutter": "20px",
+                        "xl": "64px",
+                        "sm": "16px",
+                        "base": "4px",
+                        "md": "24px"
+                    },
+                    "fontFamily": {
+                        "label-xs": ["JetBrains Mono"],
+                        "body-md": ["Inter"],
+                        "title-sm": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "code-sm": ["JetBrains Mono"],
+                        "headline-md-mobile": ["Inter"],
+                        "headline-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-xs": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "title-sm": ["18px", { "lineHeight": "24px", "fontWeight": "600" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "code-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "headline-md-mobile": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: #0a0e14;
+            color: #d4e4fa;
+            overflow-x: hidden;
+        }
+        .glass-panel {
+            background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .glass-panel-hover:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            transform: translateY(-2px);
+            transition: all 0.3s ease;
+        }
+        @keyframes pulse-red {
+            0% { box-shadow: 0 0 0 0 rgba(255, 180, 171, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 180, 171, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 180, 171, 0); }
+        }
+        .pulse-critical { animation: pulse-red 2s infinite; }
+        .link { stroke: #424754; stroke-width: 1px; }
+        .link.risky { stroke: #ffb4ab; stroke-width: 2px; stroke-dasharray: 4; animation: dash 1s linear infinite; filter: drop-shadow(0 0 4px #ffb4ab); }
+        @keyframes dash { to { stroke-dashoffset: -8; } }
+        .node circle { stroke: rgba(255,255,255,0.2); stroke-width: 1.5px; cursor: pointer; }
+        .node text { font-family: 'JetBrains Mono', monospace; font-size: 10px; fill: #c2c6d6; pointer-events: none; }
+        .node.employee circle { fill: #adc6ff; }
+        .node.server circle { fill: #ffb4ab; }
+        .node.iot circle { fill: #ffb95f; }
+        .node.guest circle { fill: #8c909f; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+        .d3-tooltip {
+            position: absolute;
+            text-align: left;
+            padding: 12px;
+            font: 12px 'JetBrains Mono', monospace;
+            background: rgba(13, 28, 45, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            pointer-events: none;
+            opacity: 0;
+            color: #d4e4fa;
+            backdrop-filter: blur(8px);
+            z-index: 100;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        .copy-btn.copied { background-color: rgba(173, 198, 255, 0.2); }
+        #connection-status {
+            position: fixed; bottom: 12px; right: 12px; z-index: 200;
+            font-family: 'JetBrains Mono', monospace; font-size: 11px;
+            padding: 6px 12px; border-radius: 4px; backdrop-filter: blur(8px);
+        }
+
+        /* ---- GRID BACKGROUND (subtle, cursor-parallax) ---- */
+        #grid-bg {
+            position: fixed;
+            inset: -20px;
+            z-index: 0;
+            opacity: 0.07;
+            pointer-events: none;
+            will-change: transform;
+        }
+        #grid-bg svg { width: 100%; height: 100%; }
+
+        /* ---- ENTRANCE ANIMATION (panels fade+rise+blur in, staggered) ---- */
+        @keyframes panelRise {
+            from { opacity: 0; transform: translateY(18px); filter: blur(6px); }
+            to   { opacity: 1; transform: translateY(0);    filter: blur(0); }
+        }
+        .panel-rise {
+            animation: panelRise 0.85s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+            opacity: 0;
+        }
+
+        /* ---- BUTTON SHINE SWEEP (on hover) ---- */
+        .btn-shine { position: relative; overflow: hidden; }
+        .btn-shine::after {
+            content: "";
+            position: absolute;
+            top: 0; left: -100%;
+            width: 55%; height: 100%;
+            background: linear-gradient(120deg, transparent, rgba(255,255,255,0.35), transparent);
+            transition: left 0.65s ease;
+            pointer-events: none;
+        }
+        .btn-shine:hover::after { left: 130%; }
+
+        @media (prefers-reduced-motion: reduce) {
+            .panel-rise { animation: none !important; opacity: 1 !important; }
+            .btn-shine::after { transition: none !important; }
+            #grid-bg { transform: none !important; }
+        }
+    </style>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body class="bg-background text-on-surface antialiased flex h-screen overflow-hidden">
+
+<!-- GRID BACKGROUND LAYER (parallax on cursor movement) -->
+<div id="grid-bg">
+    <svg xmlns="http://www.w3.org/2000/svg">
+        <defs>
+            <pattern id="gridPattern" width="48" height="48" patternUnits="userSpaceOnUse">
+                <path d="M 48 0 L 0 0 0 48" fill="none" stroke="#64748b" stroke-width="0.6"/>
+            </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#gridPattern)"/>
+    </svg>
+</div>
+
+<!-- Connection status indicator (bottom-right) -->
+<div id="connection-status" class="bg-surface-container-high/80 border border-white/10 text-on-surface-variant">
+    ⏳ Connecting to backend...
+</div>
+
+<!-- SIDE NAV -->
+<aside class="panel-rise bg-surface-container-low/60 backdrop-blur-xl border-r border-white/10 shadow-2xl flex flex-col h-screen py-md space-y-sm fixed left-0 top-0 h-full w-[280px] z-40 hidden md:flex" style="animation-delay: 0s;">
+<div class="px-md pb-md border-b border-white/5">
+<h1 class="font-headline-md text-headline-md font-black text-primary tracking-tight">SOC Command</h1>
+<p class="font-label-xs text-label-xs text-on-surface-variant mt-1">Technological Sovereignty</p>
+</div>
+<nav class="flex-1 px-sm space-y-xs overflow-y-auto pt-sm" id="sidebar-nav">
+<a class="nav-link flex items-center space-x-3 px-sm py-xs rounded text-on-surface-variant hover:text-on-surface hover:bg-white/5 transition-all duration-300" href="#" data-view="dashboard">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 0;">dashboard</span>
+<span class="font-label-xs text-label-xs uppercase tracking-wider">Overview</span>
+</a>
+<a class="nav-link flex items-center space-x-3 px-sm py-xs rounded text-primary font-bold bg-primary/10 border-r-4 border-primary hover:backdrop-blur-2xl transition-all duration-300 translate-x-1" href="#" data-view="dashboard">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">hub</span>
+<span class="font-label-xs text-label-xs uppercase tracking-wider">Network Map</span>
+</a>
+<a class="nav-link flex items-center space-x-3 px-sm py-xs rounded text-on-surface-variant hover:text-on-surface hover:bg-white/5 transition-all duration-300" href="#" data-view="alerts">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 0;">warning</span>
+<span class="font-label-xs text-label-xs uppercase tracking-wider">Alerts</span>
+</a>
+<a class="nav-link flex items-center space-x-3 px-sm py-xs rounded text-on-surface-variant hover:text-on-surface hover:bg-white/5 transition-all duration-300" href="#" data-view="policies">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 0;">policy</span>
+<span class="font-label-xs text-label-xs uppercase tracking-wider">Policies</span>
+</a>
+<a class="nav-link flex items-center space-x-3 px-sm py-xs rounded text-on-surface-variant hover:text-on-surface hover:bg-white/5 transition-all duration-300" href="#" data-view="settings">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 0;">settings</span>
+<span class="font-label-xs text-label-xs uppercase tracking-wider">Settings</span>
+</a>
+</nav>
+<div class="px-sm mt-auto pt-sm border-t border-white/5">
+<button id="refresh-btn" class="btn-shine w-full bg-primary/20 text-primary border border-primary/50 py-2 rounded-sm font-label-xs text-label-xs uppercase tracking-widest hover:bg-primary/30 transition-colors mb-4 flex justify-center items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">refresh</span>
+                Refresh Data
+            </button>
+<div class="flex flex-col space-y-2">
+<a class="footer-link flex items-center space-x-3 px-2 py-1 text-on-surface-variant hover:text-on-surface transition-colors" href="#" data-msg="Support docs coming soon">
+<span class="material-symbols-outlined text-[16px]">contact_support</span>
+<span class="font-label-xs text-label-xs">Support</span>
+</a>
+<a class="footer-link flex items-center space-x-3 px-2 py-1 text-on-surface-variant hover:text-on-surface transition-colors" href="#" data-msg="Documentation coming soon">
+<span class="material-symbols-outlined text-[16px]">menu_book</span>
+<span class="font-label-xs text-label-xs">Documentation</span>
+</a>
+</div>
+<div class="mt-4 flex items-center space-x-3 px-2">
+<div class="w-8 h-8 rounded-full border border-white/20 bg-primary/20 flex items-center justify-center text-primary font-bold text-xs">SA</div>
+<div class="flex-1 min-w-0">
+<p class="font-label-xs text-label-xs text-on-surface truncate">Sys Admin</p>
+</div>
+</div>
+</div>
+</aside>
+
+<main class="flex-1 flex flex-col ml-0 md:ml-[280px] h-screen relative">
+<header class="panel-rise h-16 flex justify-between items-center px-margin-desktop bg-surface/40 backdrop-blur-md border-b border-white/5 sticky top-0 z-30" style="animation-delay: 0.1s;">
+<div class="flex items-center space-x-4">
+<span class="font-title-sm text-title-sm text-on-surface" id="header-title">Zero-Trust Micro-Segmentation Visualizer</span>
+</div>
+<div class="flex items-center space-x-4 relative">
+<input id="search-input" type="text" placeholder="Search IP, device, risk type..." class="hidden w-64 bg-surface-container-high/60 border border-white/10 rounded px-3 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:border-primary/50" />
+<button id="search-btn" class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">search</span>
+</button>
+<div class="relative">
+<button id="notif-btn" class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<span id="notif-badge" class="hidden absolute -top-1 -right-1 bg-error text-[10px] text-white rounded-full w-4 h-4 flex items-center justify-center">0</span>
+<div id="notif-dropdown" class="hidden absolute right-0 top-10 w-80 glass-panel rounded-lg shadow-2xl p-3 z-50 bg-surface-container-high/95">
+<p class="font-label-xs text-label-xs text-on-surface-variant uppercase mb-2">🤖 AI Agent — Correlated Incidents</p>
+<div id="notif-list" class="space-y-2 max-h-64 overflow-y-auto"></div>
+</div>
+</div>
+</div>
+</header>
+
+<!-- TOAST (for non-implemented links) -->
+<div id="toast" class="hidden fixed top-20 right-6 bg-surface-container-high border border-primary/30 text-on-surface px-4 py-2 rounded shadow-xl z-50 font-label-xs text-label-xs"></div>
+
+<!-- ================= VIEW: DASHBOARD (Overview / Network Map) ================= -->
+<div class="flex-1 overflow-y-auto p-gutter space-y-gutter view-panel" id="view-dashboard">
+
+<!-- 1. TOP METRICS BAR -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-sm">
+<div class="panel-rise glass-panel rounded-lg p-sm glass-panel-hover flex flex-col justify-between" style="animation-delay: 0.15s;">
+<div class="flex justify-between items-start mb-2">
+<span class="font-label-xs text-label-xs text-on-surface-variant uppercase tracking-widest">Total Devices</span>
+<span class="material-symbols-outlined text-primary text-[20px]">devices</span>
+</div>
+<div class="font-display-lg text-display-lg text-on-surface" id="metric-devices">--</div>
+</div>
+<div class="panel-rise glass-panel rounded-lg p-sm glass-panel-hover flex flex-col justify-between" style="animation-delay: 0.22s;">
+<div class="flex justify-between items-start mb-2">
+<span class="font-label-xs text-label-xs text-on-surface-variant uppercase tracking-widest">Total Connections</span>
+<span class="material-symbols-outlined text-primary text-[20px]">sync_alt</span>
+</div>
+<div class="font-display-lg text-display-lg text-on-surface" id="metric-connections">--</div>
+</div>
+<div class="panel-rise glass-panel rounded-lg p-sm glass-panel-hover flex flex-col justify-between border-error/20 relative overflow-hidden" style="animation-delay: 0.29s;">
+<div class="absolute inset-0 bg-error/5 pulse-critical"></div>
+<div class="flex justify-between items-start mb-2 relative z-10">
+<span class="font-label-xs text-label-xs text-error uppercase tracking-widest">Risk Alerts</span>
+<span class="material-symbols-outlined text-error text-[20px]">warning</span>
+</div>
+<div class="font-display-lg text-display-lg text-error relative z-10" id="metric-alerts">--</div>
+</div>
+<div class="panel-rise glass-panel rounded-lg p-sm glass-panel-hover flex flex-col justify-between" style="animation-delay: 0.36s;">
+<div class="flex justify-between items-start mb-2">
+<span class="font-label-xs text-label-xs text-on-surface-variant uppercase tracking-widest">Policies Gen</span>
+<span class="material-symbols-outlined text-primary text-[20px]">shield</span>
+</div>
+<div class="font-display-lg text-display-lg text-on-surface" id="metric-policies">--</div>
+</div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-gutter h-[calc(100vh-220px)] min-h-[600px]">
+
+<!-- 2. INTERACTIVE NETWORK GRAPH -->
+<div class="panel-rise lg:col-span-2 glass-panel rounded-xl overflow-hidden flex flex-col relative" style="animation-delay: 0.44s;">
+<div class="px-sm py-xs border-b border-white/5 flex justify-between items-center bg-surface-container-lowest/50 absolute top-0 w-full z-10">
+<span class="font-title-sm text-title-sm text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-primary">my_location</span>
+                            Live Topography
+                        </span>
+<div class="flex gap-4">
+<div class="flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-primary"></div><span class="font-label-xs text-label-xs text-on-surface-variant">Emp</span></div>
+<div class="flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-error"></div><span class="font-label-xs text-label-xs text-on-surface-variant">Srv</span></div>
+<div class="flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-tertiary"></div><span class="font-label-xs text-label-xs text-on-surface-variant">IoT</span></div>
+<div class="flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-outline"></div><span class="font-label-xs text-label-xs text-on-surface-variant">Gst</span></div>
+</div>
+</div>
+<div class="flex-1 w-full h-full bg-[#051424] cursor-crosshair" id="d3-container"></div>
+<!-- Node detail panel (shows on node click) -->
+<div id="node-detail" class="hidden absolute bottom-3 left-3 glass-panel rounded-lg p-3 z-20 bg-surface-container-high/95 max-w-xs"></div>
+</div>
+
+<!-- RIGHT COLUMN: ALERTS & POLICIES (compact, on Network Map view) -->
+<div class="flex flex-col gap-gutter h-full">
+
+<div class="panel-rise glass-panel rounded-xl flex flex-col flex-1 overflow-hidden" style="animation-delay: 0.5s;">
+<div class="px-sm py-xs border-b border-white/5 bg-error/5">
+<span class="font-title-sm text-title-sm text-error flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">gpp_bad</span>
+                                Active Anomalies
+                            </span>
+</div>
+<div class="p-sm space-y-sm overflow-y-auto flex-1" id="alerts-container">
+<p class="font-label-xs text-label-xs text-on-surface-variant">Loading alerts...</p>
+</div>
+</div>
+
+<div class="panel-rise glass-panel rounded-xl flex flex-col flex-1 overflow-hidden" style="animation-delay: 0.56s;">
+<div class="px-sm py-xs border-b border-white/5 bg-primary/5">
+<span class="font-title-sm text-title-sm text-primary flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">policy</span>
+                                Auto-Generated Policies
+                            </span>
+</div>
+<div class="p-sm space-y-sm overflow-y-auto flex-1" id="policies-container">
+<p class="font-label-xs text-label-xs text-on-surface-variant">Loading policies...</p>
+</div>
+</div>
+
+</div>
+</div>
+</div>
+
+<!-- ================= VIEW: ALERTS (full page) ================= -->
+<div class="flex-1 overflow-y-auto p-gutter space-y-gutter view-panel hidden" id="view-alerts">
+<h2 class="font-headline-md text-headline-md text-on-surface mb-2">All Risk Alerts</h2>
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-sm" id="alerts-view-container">
+<p class="font-label-xs text-label-xs text-on-surface-variant">Loading alerts...</p>
+</div>
+</div>
+
+<!-- ================= VIEW: POLICIES (full page) ================= -->
+<div class="flex-1 overflow-y-auto p-gutter space-y-gutter view-panel hidden" id="view-policies">
+<h2 class="font-headline-md text-headline-md text-on-surface mb-2">All Suggested Policies</h2>
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-sm" id="policies-view-container">
+<p class="font-label-xs text-label-xs text-on-surface-variant">Loading policies...</p>
+</div>
+</div>
+
+<!-- ================= VIEW: SETTINGS ================= -->
+<div class="flex-1 overflow-y-auto p-gutter space-y-gutter view-panel hidden" id="view-settings">
+<h2 class="font-headline-md text-headline-md text-on-surface mb-4">Settings</h2>
+<div class="glass-panel rounded-xl p-md max-w-lg">
+<label class="font-label-xs text-label-xs text-on-surface-variant uppercase block mb-2">Backend API URL</label>
+<input id="api-base-input" type="text" class="w-full bg-surface-container-high/60 border border-white/10 rounded px-3 py-2 text-sm text-on-surface mb-3 focus:outline-none focus:border-primary/50" value="http://localhost:5000" />
+<button id="save-settings-btn" class="bg-primary/20 text-primary border border-primary/50 px-4 py-2 rounded-sm font-label-xs text-label-xs uppercase tracking-widest hover:bg-primary/30 transition-colors">
+                Save &amp; Reconnect
+            </button>
+<p class="font-label-xs text-label-xs text-on-surface-variant mt-4">Change this if your Flask backend runs on a different port.</p>
+</div>
+</div>
+
+</main>
+
+<script>
+    // ============================================================
+    // BACKEND CONNECTION CONFIG
+    // ============================================================
+    const API_BASE_DEFAULT = "http://localhost:5000";
+    let API_BASE = API_BASE_DEFAULT;
+
+    let simulation, svg, g, zoom, tooltip;
+
+    // ---- Helper: node radius by segment ----
+    function radiusForSegment(segment) {
+        if (segment === "server") return 15;
+        if (segment === "employee") return 10;
+        return 8; // iot, guest
+    }
+
+    // ---- Convert backend data (devices + connections) into D3 graph format ----
+    function buildGraphData(devices, connections, alerts) {
+        const riskyConnIds = new Set(alerts.map(a => a.conn_id));
+        const alertByConnId = {};
+        alerts.forEach(a => { alertByConnId[a.conn_id] = a.risk_type; });
+
+        const nodes = devices.map(d => ({
+            id: d.ip,
+            group: d.segment,
+            type: d.device_type,
+            radius: radiusForSegment(d.segment)
+        }));
+
+        const nodeIds = new Set(nodes.map(n => n.id));
+
+        const links = connections
+            .filter(c => nodeIds.has(c.src_ip) && nodeIds.has(c.dst_ip))
+            .map(c => ({
+                source: c.src_ip,
+                target: c.dst_ip,
+                value: 1,
+                risky: riskyConnIds.has(c.conn_id),
+                alert: alertByConnId[c.conn_id] || null
+            }));
+
+        return { nodes, links };
+    }
+
+    // ---- Render / re-render the D3 force graph ----
+    function renderGraph(graphData) {
+        const container = document.getElementById('d3-container');
+        container.innerHTML = ""; // clear previous render
+
+        const width = container.clientWidth || 800;
+        const height = container.clientHeight || 600;
+
+        svg = d3.select("#d3-container")
+            .append("svg")
+            .attr("width", "100%")
+            .attr("height", "100%")
+            .attr("viewBox", [0, 0, width, height]);
+
+        g = svg.append("g");
+
+        zoom = d3.zoom()
+            .scaleExtent([0.5, 4])
+            .on("zoom", (event) => g.attr("transform", event.transform));
+        svg.call(zoom);
+
+        simulation = d3.forceSimulation(graphData.nodes)
+            .force("link", d3.forceLink(graphData.links).id(d => d.id).distance(100))
+            .force("charge", d3.forceManyBody().strength(-150))
+            .force("center", d3.forceCenter(width / 2, height / 2))
+            .force("x", d3.forceX(width / 2).strength(0.06))
+            .force("y", d3.forceY(height / 2).strength(0.06))
+            .force("collide", d3.forceCollide().radius(d => d.radius + 14).iterations(2));
+
+        if (!tooltip) {
+            tooltip = d3.select("body").append("div").attr("class", "d3-tooltip").style("opacity", 0);
+        }
+
+        const link = g.append("g")
+            .selectAll("line")
+            .data(graphData.links)
+            .enter().append("line")
+            .attr("class", d => `link ${d.risky ? 'risky' : ''}`)
+            .on("mouseover", function(event, d) {
+                if (!d.risky) return;
+                tooltip.transition().duration(150).style("opacity", 1);
+                tooltip.html(`<strong class="text-error">⚠ ${d.alert || 'RISKY'}</strong>`)
+                    .style("left", (event.pageX + 15) + "px")
+                    .style("top", (event.pageY - 20) + "px");
+            })
+            .on("mouseout", () => tooltip.transition().duration(300).style("opacity", 0));
+
+        const node = g.append("g")
+            .selectAll("g")
+            .data(graphData.nodes)
+            .enter().append("g")
+            .attr("class", d => `node ${d.group}`)
+            .call(d3.drag()
+                .on("start", dragstarted)
+                .on("drag", dragged)
+                .on("end", dragended))
+            .on("mouseover", function(event, d) {
+                d3.select(this).select("circle").style("stroke", "#fff").style("stroke-width", "2px");
+                tooltip.transition().duration(150).style("opacity", 1);
+                tooltip.html(`
+                    <div class="mb-1 pb-1 border-b border-white/20"><strong>IP:</strong> <span class="text-primary">${d.id}</span></div>
+                    <div><strong>Type:</strong> ${d.type}</div>
+                    <div><strong>Segment:</strong> ${d.group.toUpperCase()}</div>
+                `)
+                .style("left", (event.pageX + 15) + "px")
+                .style("top", (event.pageY - 28) + "px");
+            })
+            .on("mouseout", function() {
+                d3.select(this).select("circle").style("stroke", "rgba(255,255,255,0.2)").style("stroke-width", "1.5px");
+                tooltip.transition().duration(300).style("opacity", 0);
+            })
+            .on("click", function(event, d) {
+                const detail = document.getElementById('node-detail');
+                detail.classList.remove('hidden');
+                detail.innerHTML = `
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="font-code-sm text-code-sm text-primary">${d.id}</span>
+                        <button onclick="document.getElementById('node-detail').classList.add('hidden')" class="text-on-surface-variant hover:text-on-surface">
+                            <span class="material-symbols-outlined text-[16px]">close</span>
+                        </button>
+                    </div>
+                    <p class="font-label-xs text-label-xs text-on-surface-variant">Type: <span class="text-on-surface">${d.type}</span></p>
+                    <p class="font-label-xs text-label-xs text-on-surface-variant">Segment: <span class="text-on-surface">${d.group.toUpperCase()}</span></p>
+                `;
+            });
+
+        node.append("circle").attr("r", d => d.radius);
+        node.append("text").attr("dx", 12).attr("dy", ".35em").text(d => d.id).style("opacity", 0.7);
+
+        simulation.on("tick", () => {
+            link.attr("x1", d => d.source.x).attr("y1", d => d.source.y)
+                .attr("x2", d => d.target.x).attr("y2", d => d.target.y);
+            node.attr("transform", d => `translate(${d.x},${d.y})`);
+        });
+
+        // Auto-fit: jab simulation settle ho jaaye, sab nodes ko frame ke andar la do
+        simulation.on("end", () => {
+            const xs = graphData.nodes.map(d => d.x);
+            const ys = graphData.nodes.map(d => d.y);
+            const minX = Math.min(...xs), maxX = Math.max(...xs);
+            const minY = Math.min(...ys), maxY = Math.max(...ys);
+            const bboxW = Math.max(maxX - minX, 1);
+            const bboxH = Math.max(maxY - minY, 1);
+            const padding = 60;
+            const scale = Math.min(
+                (width - padding * 2) / bboxW,
+                (height - padding * 2) / bboxH,
+                1.5 // zyada zoom-in mat karo agar graph chhota ho
+            );
+            const midX = (minX + maxX) / 2;
+            const midY = (minY + maxY) / 2;
+            const translateX = width / 2 - scale * midX;
+            const translateY = height / 2 - scale * midY;
+
+            svg.transition().duration(600).call(
+                zoom.transform,
+                d3.zoomIdentity.translate(translateX, translateY).scale(scale)
+            );
+        });
+
+        function dragstarted(event, d) {
+            if (!event.active) simulation.alphaTarget(0.3).restart();
+            d.fx = d.x; d.fy = d.y;
+        }
+        function dragged(event, d) { d.fx = event.x; d.fy = event.y; }
+        function dragended(event, d) {
+            if (!event.active) simulation.alphaTarget(0);
+            d.fx = null; d.fy = null;
+        }
+    }
+
+    // ---- Render Alerts Panel (containerId batao — compact ya full-page dono ke liye reuse hota hai) ----
+    function renderAlerts(alerts, containerId = 'alerts-container') {
+        const el = document.getElementById(containerId);
+        if (!el) return;
+        if (!alerts || alerts.length === 0) {
+            el.innerHTML = `<p class="font-label-xs text-label-xs text-on-surface-variant">No active anomalies detected.</p>`;
+            return;
+        }
+
+        el.innerHTML = alerts.map(a => {
+            const isHigh = a.risk_level === "HIGH";
+            const colorClass = isHigh ? "error" : "tertiary";
+            const badgeLabel = isHigh ? "HIGH" : "MED";
+            const confidencePct = Math.round((a.confidence_score || 0) * 100);
+            const searchBlob = `${a.risk_type} ${a.src_ip || ''} ${a.dst_ip || ''}`.toLowerCase();
+
+            return `
+            <div class="alert-card bg-surface-container-high/40 border border-${colorClass}/40 rounded p-3 relative overflow-hidden" data-search="${searchBlob}">
+                <div class="absolute left-0 top-0 bottom-0 w-1 bg-${colorClass}"></div>
+                <div class="flex justify-between items-start mb-1 pl-2">
+                    <span class="font-code-sm text-code-sm text-${colorClass} break-all">${a.risk_type}</span>
+                    <span class="px-2 py-0.5 rounded-full bg-${colorClass}/10 border border-${colorClass}/50 font-label-xs text-label-xs text-${colorClass}">${badgeLabel}</span>
+                </div>
+                <div class="pl-2 mt-2">
+                    <div class="flex justify-between font-label-xs text-label-xs text-on-surface-variant mb-1">
+                        <span>Confidence</span><span>${(a.confidence_score || 0).toFixed(2)}</span>
+                    </div>
+                    <div class="w-full h-1 bg-surface-container-lowest rounded overflow-hidden">
+                        <div class="h-full bg-${colorClass}" style="width:${confidencePct}%"></div>
+                    </div>
+                    <p class="font-label-xs text-label-xs text-on-surface-variant mt-2">${a.src_ip || '?'} -&gt; ${a.dst_ip || '(multiple)'}</p>
+                    <p class="font-label-xs text-label-xs text-on-surface-variant/70 mt-1">${a.evidence || ''}</p>
+                </div>
+            </div>`;
+        }).join("");
+    }
+
+    // ---- Render Policies Panel (containerId batao — compact ya full-page dono ke liye reuse hota hai) ----
+    function renderPolicies(policies, containerId = 'policies-container') {
+        const el = document.getElementById(containerId);
+        if (!el) return;
+        if (!policies || policies.length === 0) {
+            el.innerHTML = `<p class="font-label-xs text-label-xs text-on-surface-variant">No policies generated.</p>`;
+            return;
+        }
+
+        el.innerHTML = policies.map((p, idx) => `
+            <div class="bg-surface-container-high/60 border border-white/10 rounded p-3">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="font-label-xs text-label-xs text-primary uppercase tracking-wider flex items-center gap-1">
+                        <span class="material-symbols-outlined text-[14px]">psychology</span>${p.action}
+                    </span>
+                    <span class="font-label-xs text-[10px] text-tertiary border border-tertiary/30 px-1 rounded bg-tertiary/10">REQUIRES REVIEW</span>
+                </div>
+                <div class="bg-black/40 p-2 rounded border border-white/5 mb-2 font-code-sm text-code-sm text-on-surface-variant overflow-x-auto">
+                    <code>${(p.iptables_rule || "").replace(/\\n/g, "<br>")}</code>
+                </div>
+                <button class="copy-btn btn-shine w-full py-1.5 border border-primary/30 text-primary hover:bg-primary/10 rounded text-label-xs font-label-xs transition-colors flex items-center justify-center gap-2" data-rule="${(p.iptables_rule || "").replace(/"/g, '&quot;')}">
+                    <span class="material-symbols-outlined text-[14px]">content_copy</span>Copy Command
+                </button>
+            </div>
+        `).join("");
+
+        // wire up copy buttons
+        el.querySelectorAll(".copy-btn").forEach(btn => {
+            btn.addEventListener("click", () => {
+                navigator.clipboard.writeText(btn.dataset.rule).then(() => {
+                    btn.classList.add("copied");
+                    const original = btn.innerHTML;
+                    btn.innerHTML = `<span class="material-symbols-outlined text-[14px]">check</span>Copied!`;
+                    setTimeout(() => {
+                        btn.innerHTML = original;
+                        btn.classList.remove("copied");
+                    }, 1500);
+                });
+            });
+        });
+    }
+
+    // ---- Update top metrics ----
+    function renderMetrics(metrics) {
+        document.getElementById('metric-devices').textContent = metrics.total_devices ?? '--';
+        document.getElementById('metric-connections').textContent = metrics.total_connections ?? '--';
+        document.getElementById('metric-alerts').textContent = metrics.total_alerts ?? '--';
+        document.getElementById('metric-policies').textContent = metrics.total_policies ?? '--';
+    }
+
+    // ---- Notification dropdown (AI Agent ke correlated/prioritized incidents dikhata hai) ----
+    function renderNotifications(notifications) {
+        const badge = document.getElementById('notif-badge');
+        const list = document.getElementById('notif-list');
+        if (!notifications || notifications.length === 0) {
+            badge.classList.add('hidden');
+            list.innerHTML = `<p class="font-label-xs text-label-xs text-on-surface-variant">No incidents. Agent monitoring...</p>`;
+            return;
+        }
+        badge.textContent = notifications.length;
+        badge.classList.remove('hidden');
+        list.innerHTML = notifications.slice(0, 6).map(n => `
+            <div class="text-xs border-l-2 ${n.severity === 'HIGH' ? 'border-error' : 'border-tertiary'} pl-2 py-2 mb-1">
+                <div class="flex justify-between items-center mb-1">
+                    <span class="font-code-sm text-code-sm ${n.severity === 'HIGH' ? 'text-error' : 'text-tertiary'} font-bold">${n.severity}</span>
+                    <span class="font-label-xs text-[9px] text-on-surface-variant">score: ${n.priority_score}</span>
+                </div>
+                <p class="font-label-xs text-label-xs text-on-surface">${n.summary}</p>
+                <p class="font-label-xs text-[9px] text-on-surface-variant mt-1 italic">🤖 ${n.agent_reasoning[0]}</p>
+            </div>
+        `).join("");
+    }
+
+    // ---- Toast helper (Support/Documentation jaise "coming soon" links ke liye) ----
+    function showToast(msg) {
+        const toast = document.getElementById('toast');
+        toast.textContent = msg;
+        toast.classList.remove('hidden');
+        setTimeout(() => toast.classList.add('hidden'), 2000);
+    }
+
+    // ---- View switching (sidebar nav tabs) ----
+    let lastData = null; // sabse recent fetched data yaad rakhte hain view-switch ke time re-render ke liye
+
+    function switchView(viewName) {
+        document.querySelectorAll('.view-panel').forEach(v => v.classList.add('hidden'));
+        const target = document.getElementById(`view-${viewName}`);
+        if (target) target.classList.remove('hidden');
+
+        document.querySelectorAll('.nav-link').forEach(link => {
+            const isActive = link.dataset.view === viewName;
+            link.classList.toggle('text-primary', isActive);
+            link.classList.toggle('font-bold', isActive);
+            link.classList.toggle('bg-primary/10', isActive);
+            link.classList.toggle('border-r-4', isActive);
+            link.classList.toggle('border-primary', isActive);
+            link.classList.toggle('text-on-surface-variant', !isActive);
+        });
+
+        // full-page views ko bhi latest data se populate karo
+        if (lastData) {
+            if (viewName === 'alerts') renderAlerts(lastData.alerts, 'alerts-view-container');
+            if (viewName === 'policies') renderPolicies(lastData.policies, 'policies-view-container');
+        }
+    }
+
+    // ---- Main: fetch everything from backend and render ----
+    async function loadDashboard() {
+        const statusEl = document.getElementById('connection-status');
+        try {
+            statusEl.textContent = "⏳ Connecting to backend...";
+            statusEl.className = "bg-surface-container-high/80 border border-white/10 text-on-surface-variant";
+
+            const res = await fetch(`${API_BASE}/api/summary`);
+            if (!res.ok) throw new Error(`Server returned ${res.status}`);
+            const data = await res.json();
+            lastData = data;
+
+            renderMetrics(data.metrics);
+            renderAlerts(data.alerts, 'alerts-container');
+            renderAlerts(data.alerts, 'alerts-view-container');
+            renderPolicies(data.policies, 'policies-container');
+            renderPolicies(data.policies, 'policies-view-container');
+            renderNotifications(data.notifications);
+
+            const graphData = buildGraphData(data.devices, data.connections, data.alerts);
+            renderGraph(graphData);
+
+            statusEl.textContent = "✅ Connected — live data";
+            statusEl.className = "bg-primary/20 border border-primary/40 text-primary";
+        } catch (err) {
+            console.error(err);
+            statusEl.textContent = "❌ Backend not reachable (is backend_server.py running?)";
+            statusEl.className = "bg-error/20 border border-error/40 text-error";
+            document.getElementById('alerts-container').innerHTML =
+                `<p class="font-label-xs text-label-xs text-error">Could not load data. Run 'python3 backend_server.py' first.</p>`;
+        }
+    }
+
+    // ---- Grid background parallax (subtle, follows cursor) ----
+    function initGridParallax() {
+        const gridBg = document.getElementById('grid-bg');
+        if (!gridBg) return;
+        const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (reduceMotion) return;
+
+        let targetX = 0, targetY = 0, curX = 0, curY = 0;
+        window.addEventListener('mousemove', (e) => {
+            targetX = (e.clientX / window.innerWidth - 0.5) * 16;
+            targetY = (e.clientY / window.innerHeight - 0.5) * 16;
+        });
+        function loop() {
+            curX += (targetX - curX) * 0.06;
+            curY += (targetY - curY) * 0.06;
+            gridBg.style.transform = `translate(${curX}px, ${curY}px)`;
+            requestAnimationFrame(loop);
+        }
+        requestAnimationFrame(loop);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        loadDashboard();
+        initGridParallax();
+        document.getElementById('refresh-btn').addEventListener('click', loadDashboard);
+
+        // ---- Sidebar nav clicks ----
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                switchView(link.dataset.view);
+            });
+        });
+
+        // ---- Footer links (Support/Documentation) — abhi placeholder, toast dikhata hai ----
+        document.querySelectorAll('.footer-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                showToast(link.dataset.msg || "Coming soon");
+            });
+        });
+
+        // ---- Search toggle + filter ----
+        const searchBtn = document.getElementById('search-btn');
+        const searchInput = document.getElementById('search-input');
+        searchBtn.addEventListener('click', () => {
+            searchInput.classList.toggle('hidden');
+            if (!searchInput.classList.contains('hidden')) searchInput.focus();
+        });
+        searchInput.addEventListener('input', () => {
+            const q = searchInput.value.toLowerCase().trim();
+            document.querySelectorAll('.alert-card').forEach(card => {
+                const match = !q || card.dataset.search.includes(q);
+                card.style.display = match ? '' : 'none';
+            });
+        });
+
+        // ---- Notification dropdown toggle ----
+        const notifBtn = document.getElementById('notif-btn');
+        const notifDropdown = document.getElementById('notif-dropdown');
+        notifBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            notifDropdown.classList.toggle('hidden');
+        });
+        document.addEventListener('click', (e) => {
+            if (!notifDropdown.contains(e.target) && e.target !== notifBtn) {
+                notifDropdown.classList.add('hidden');
+            }
+        });
+
+        // ---- Settings: change backend URL ----
+        document.getElementById('save-settings-btn').addEventListener('click', () => {
+            const newUrl = document.getElementById('api-base-input').value.trim();
+            if (newUrl) {
+                API_BASE = newUrl;
+                showToast("Backend URL updated — reconnecting...");
+                loadDashboard();
+            }
+        });
+
+        window.addEventListener('resize', () => {
+            if (!simulation) return;
+            const container = document.getElementById('d3-container');
+            const newWidth = container.clientWidth;
+            const newHeight = container.clientHeight;
+            svg.attr("viewBox", [0, 0, newWidth, newHeight]);
+            simulation.force("center", d3.forceCenter(newWidth / 2, newHeight / 2));
+            simulation.alpha(0.3).restart();
+        });
+    });
+</script>
+</body></html>

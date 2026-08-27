@@ -1,0 +1,22 @@
+[
+  {
+    "timestamp": "2026-08-27T11:56:19.926147",
+    "conn_id": "C3686",
+    "risk_type": "FAN_OUT_LATERAL_MOVEMENT",
+    "risk_level": "MEDIUM",
+    "confidence_score": 0.7,
+    "evidence": "Source 192.168.0.180 connected to 27 distinct destination devices \u2014 unusually broad access pattern, possible reconnaissance or lateral movement.",
+    "src_ip": "192.168.0.180",
+    "dst_ip": null
+  },
+  {
+    "timestamp": "2026-08-27T11:55:50.138926",
+    "conn_id": "C0026",
+    "risk_type": "PORT_SCANNING",
+    "risk_level": "HIGH",
+    "confidence_score": 0.5,
+    "evidence": "Source 127.0.0.1 contacted 5 unique ports on 127.0.0.1 within 30 seconds \u2014 classic reconnaissance/port-scan pattern.",
+    "src_ip": "127.0.0.1",
+    "dst_ip": "127.0.0.1"
+  }
+]
