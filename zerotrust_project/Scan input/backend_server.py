@@ -50,7 +50,11 @@ def run_script(script_name, extra_args=None):
 
 
 def live_capture_loop():
-    
+    """
+    Ye function ek alag background-thread mein HAMESHA chalta rehta hai —
+    jab tak backend server on hai. Har cycle mein: capture -> detect ->
+    suggest-policy -> AI-agent, phir turant agla cycle.
+    """
     cycle_num = 0
     while True:
         cycle_num += 1
