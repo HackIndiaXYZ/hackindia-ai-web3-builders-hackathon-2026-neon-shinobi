@@ -3,347 +3,462 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Zero-Trust Micro-Segmentation Visualizer - Aegis SOC</title>
+<title>AEGIS — Zero-Trust Micro-Segmentation & AI Triage SOC Dashboard</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
-
 <script id="tailwind-config">
-    tailwind.config = {
-        darkMode: "class",
-        theme: {
-            extend: {
-                colors: {
-                    "bg-base": "#060a12",
-                    "surface-dark": "#0b1220",
-                    "surface-card": "#10192b",
-                    "surface-card-hover": "#17243c",
-                    "border-glow": "rgba(59, 130, 246, 0.25)",
-                    "brand-primary": "#3b82f6",
-                    "brand-cyan": "#06b6d4",
-                    "brand-emerald": "#10b981",
-                    "brand-amber": "#f59e0b",
-                    "brand-rose": "#f43f5e"
-                },
-                fontFamily: {
-                    sans: ["Inter", "sans-serif"],
-                    mono: ["JetBrains Mono", "monospace"]
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "bg-base": "#040914",
+                        "surface-dark": "#0a1324",
+                        "surface-card": "#0f1c36",
+                        "surface-card-hover": "#16274a",
+                        "brand-primary": "#3b82f6",
+                        "brand-cyan": "#06b6d4",
+                        "brand-emerald": "#10b981",
+                        "brand-amber": "#f59e0b",
+                        "brand-rose": "#f43f5e",
+                        "brand-purple": "#a855f7"
+                    },
+                    fontFamily: {
+                        sans: ["Inter", "sans-serif"],
+                        mono: ["JetBrains Mono", "monospace"]
+                    }
                 }
             }
         }
-    }
-</script>
-
+    </script>
 <style>
-    body {
-        background-color: #060a12;
-        color: #d4e4fa;
-        font-family: 'Inter', sans-serif;
-        overflow-x: hidden;
-    }
+        body {
+            background-color: #040914;
+            color: #e2e8f0;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
 
-    #grid-bg {
-        position: fixed;
-        inset: -40px;
-        z-index: 0;
-        opacity: 0.08;
-        pointer-events: none;
-        will-change: transform;
-        background-image: 
-            linear-gradient(to right, rgba(255,255,255,0.08) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(255,255,255,0.08) 1px, transparent 1px);
-        background-size: 36px 36px;
-    }
+        /* Subtle grid background pattern */
+        #grid-bg {
+            position: fixed;
+            inset: -40px;
+            z-index: 0;
+            opacity: 0.12;
+            pointer-events: none;
+            will-change: transform;
+            background-image: 
+                linear-gradient(to right, rgba(255,255,255,0.07) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255,255,255,0.07) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
 
-    .glass-panel {
-        background: linear-gradient(135deg, rgba(16, 25, 43, 0.85) 0%, rgba(11, 18, 32, 0.7) 100%);
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
+        /* Glassmorphism card styles */
+        .glass-panel {
+            background: linear-gradient(135deg, rgba(15, 28, 54, 0.75) 0%, rgba(10, 19, 36, 0.6) 100%);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
 
-    .glass-panel-hover:hover {
-        border-color: rgba(59, 130, 246, 0.35);
-        transform: translateY(-2px);
-        box-shadow: 0 14px 40px -5px rgba(59, 130, 246, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.15);
-    }
+        .glass-panel-hover {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glass-panel-hover:hover {
+            border-color: rgba(59, 130, 246, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px 0 rgba(59, 130, 246, 0.15);
+        }
 
-    @keyframes pulse-red {
-        0% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.5); }
-        70% { box-shadow: 0 0 0 10px rgba(244, 63, 94, 0); }
-        100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0); }
-    }
-    .pulse-critical { animation: pulse-red 2s infinite; }
+        /* D3 Force Link & Node Styles */
+        .link { stroke: #334155; stroke-width: 1.5px; stroke-opacity: 0.6; transition: all 0.3s; }
+        .link.risky {
+            stroke: #f43f5e;
+            stroke-width: 2.5px;
+            stroke-dasharray: 6;
+            animation: dash 1.2s linear infinite;
+            filter: drop-shadow(0 0 6px rgba(244, 63, 94, 0.8));
+        }
+        @keyframes dash { to { stroke-dashoffset: -12; } }
 
-    .link { stroke: #334155; stroke-width: 1.5px; stroke-opacity: 0.6; transition: all 0.3s; }
-    .link.risky {
-        stroke: #f43f5e;
-        stroke-width: 2.5px;
-        stroke-dasharray: 6;
-        animation: dash 1.2s linear infinite;
-        filter: drop-shadow(0 0 8px rgba(244, 63, 94, 0.8));
-    }
-    @keyframes dash { to { stroke-dashoffset: -12; } }
+        .node circle {
+            stroke: rgba(255, 255, 255, 0.25);
+            stroke-width: 2px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .node:hover circle {
+            stroke: #60a5fa;
+            stroke-width: 3px;
+            filter: drop-shadow(0 0 10px rgba(96, 165, 250, 0.8));
+        }
 
-    .node circle {
-        stroke: rgba(255, 255, 255, 0.25);
-        stroke-width: 2px;
-        transition: all 0.3s ease;
-        cursor: pointer;
-    }
-    .node:hover circle {
-        stroke: #60a5fa;
-        stroke-width: 3.5px;
-        filter: drop-shadow(0 0 12px rgba(96, 165, 250, 0.9));
-    }
+        .node text {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            font-weight: 500;
+            fill: #94a3b8;
+            pointer-events: none;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+        }
 
-    .node text {
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 10px;
-        font-weight: 500;
-        fill: #94a3b8;
-        pointer-events: none;
-        text-shadow: 0 2px 4px rgba(0,0,0,0.9);
-    }
+        .node.server circle { fill: #f43f5e; filter: drop-shadow(0 0 9px rgba(244, 63, 94, 0.55)); }
+        .node.employee circle { fill: #3b82f6; filter: drop-shadow(0 0 9px rgba(59, 130, 246, 0.55)); }
+        .node.iot circle { fill: #f59e0b; filter: drop-shadow(0 0 9px rgba(245, 158, 11, 0.5)); }
+        .node.guest circle { fill: #64748b; filter: drop-shadow(0 0 6px rgba(100, 116, 139, 0.35)); }
 
-    .node.server circle { fill: #f43f5e; }
-    .node.employee circle { fill: #3b82f6; }
-    .node.iot circle { fill: #f59e0b; }
-    .node.guest circle { fill: #64748b; }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(10, 19, 36, 0.5); }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 9999px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(59, 130, 246, 0.5); }
 
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: rgba(11, 18, 32, 0.5); }
-    ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 9999px; }
-    ::-webkit-scrollbar-thumb:hover { background: rgba(59, 130, 246, 0.5); }
+        /* Tooltip styling */
+        .d3-tooltip {
+            position: absolute;
+            padding: 12px 16px;
+            font: 12px 'JetBrains Mono', monospace;
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 8px;
+            pointer-events: none;
+            opacity: 0;
+            color: #f1f5f9;
+            backdrop-filter: blur(12px);
+            z-index: 100;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+            transition: opacity 0.2s ease-in-out;
+        }
 
-    .d3-tooltip {
-        position: absolute;
-        padding: 12px 16px;
-        font: 12px 'JetBrains Mono', monospace;
-        background: rgba(11, 18, 32, 0.95);
-        border: 1px solid rgba(59, 130, 246, 0.3);
-        border-radius: 8px;
-        pointer-events: none;
-        opacity: 0;
-        color: #d4e4fa;
-        backdrop-filter: blur(12px);
-        z-index: 100;
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6);
-        transition: opacity 0.2s ease-in-out;
-    }
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(14px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-up {
+            animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
 
-    .copy-btn.copied { background-color: rgba(59, 130, 246, 0.25); border-color: rgba(59, 130, 246, 0.6); }
-</style>
+        /* ---- PREMIUM: Ambient gradient-mesh background (Stripe/Linear-style color blooms) ---- */
+        #ambient-mesh {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        #ambient-mesh .blob {
+            position: absolute;
+            border-radius: 9999px;
+            filter: blur(110px);
+            opacity: 0.16;
+        }
+        #ambient-mesh .blob-1 { width: 520px; height: 520px; top: -140px; left: -80px; background: #3b82f6; }
+        #ambient-mesh .blob-2 { width: 480px; height: 480px; top: 10%; right: -160px; background: #a855f7; opacity: 0.12; }
+        #ambient-mesh .blob-3 { width: 420px; height: 420px; bottom: -160px; left: 30%; background: #06b6d4; opacity: 0.1; }
+
+        /* ---- PREMIUM: metric card top sheen + tabular numerals ---- */
+        .metric-value { font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+        .glass-panel { position: relative; }
+        .glass-panel::before {
+            content: "";
+            position: absolute; inset: 0; border-radius: inherit;
+            background: linear-gradient(180deg, rgba(255,255,255,0.06) 0%, transparent 40%);
+            pointer-events: none;
+        }
+
+        /* ---- PREMIUM: skeleton shimmer while metrics load ---- */
+        .metric-loading {
+            background: linear-gradient(90deg, rgba(255,255,255,0.06) 25%, rgba(255,255,255,0.14) 37%, rgba(255,255,255,0.06) 63%);
+            background-size: 400% 100%;
+            animation: shimmer 1.4s ease infinite;
+            border-radius: 6px;
+            color: transparent !important;
+        }
+        @keyframes shimmer { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
+
+        /* ---- PREMIUM: sidebar logo ambient pulse ---- */
+        @keyframes logoGlow {
+            0%, 100% { box-shadow: 0 0 20px 0 rgba(59, 130, 246, 0.35); }
+            50% { box-shadow: 0 0 32px 4px rgba(59, 130, 246, 0.55); }
+        }
+        .logo-glow { animation: logoGlow 3s ease-in-out infinite; }
+
+        /* ---- PREMIUM: node halo glow behind graph nodes ---- */
+        .node-halo { pointer-events: none; }
+
+        @media (prefers-reduced-motion: reduce) {
+            .logo-glow, .metric-loading, .link.risky, .animate-fade-up { animation: none !important; opacity: 1 !important; }
+        }
+    </style>
 <script src="https://d3js.org/d3.v7.min.js"></script>
 </head>
 <body class="bg-bg-base text-slate-200 antialiased flex h-screen overflow-hidden select-none">
 
+<!-- BACKGROUND GRID PARALLAX -->
 <div id="grid-bg"></div>
 
-<div id="connection-status" class="fixed bottom-3 right-3 z-50 font-mono text-xs px-3.5 py-1.5 rounded-lg border backdrop-blur-md transition-all shadow-xl bg-slate-900/80 border-slate-700/60 text-slate-300 flex items-center gap-2">
-    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-    <span id="status-text">Connecting to backend...</span>
+<!-- PREMIUM AMBIENT GRADIENT MESH -->
+<div id="ambient-mesh">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
 </div>
 
-<aside class="w-[270px] bg-surface-dark/80 backdrop-blur-xl border-r border-slate-800/80 flex flex-col h-full z-40 relative hidden md:flex shrink-0">
-    <div class="px-6 py-5 border-b border-slate-800/80">
-        <h1 class="text-xl font-black text-blue-400 tracking-tight flex items-center gap-2">
+<!-- BACKEND CONNECTION STATUS BADGE -->
+<div id="connection-status" class="fixed bottom-4 right-4 z-50 font-mono text-xs px-3.5 py-2 rounded-lg border backdrop-blur-md transition-all shadow-xl bg-slate-900/80 border-slate-700/60 text-slate-300 flex items-center gap-2">
+    <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+    <span id="status-text">Connecting to AEGIS backend...</span>
+</div>
+
+<!-- SIDEBAR NAVIGATION -->
+<aside class="w-72 bg-surface-dark/80 backdrop-blur-xl border-r border-slate-800/80 flex flex-col h-full z-40 relative">
+    <div class="p-6 border-b border-slate-800/80 flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-cyan-400 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-blue-500/30 logo-glow">
             <span class="material-symbols-outlined text-[24px]">shield_lock</span>
-            SOC Command
-        </h1>
-        <p class="text-[11px] font-mono text-slate-400 mt-1">Technological Sovereignty</p>
+        </div>
+        <div>
+            <h1 class="font-bold text-lg text-white tracking-tight leading-none flex items-center gap-1.5">
+                AEGIS <span class="text-[10px] px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 font-mono border border-blue-500/30">v2.4</span>
+            </h1>
+            <p class="text-xs text-slate-400 font-mono mt-1">Zero-Trust SOC Command</p>
+        </div>
     </div>
 
-    <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto" id="sidebar-nav">
-        <a href="#" data-view="dashboard" class="nav-link flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-xs font-mono uppercase tracking-wider text-slate-400 hover:text-slate-200 hover:bg-white/5 transition-all">
-            <span class="material-symbols-outlined text-[20px]">dashboard</span>
-            <span>Overview</span>
+    <nav class="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto" id="sidebar-nav">
+        <a href="#" data-view="dashboard" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800/50 transition-all duration-200 group">
+            <span class="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-blue-400">dashboard</span>
+            <span>SOC Overview</span>
         </a>
-        <a href="#" data-view="dashboard" class="nav-link active flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-xs font-mono uppercase tracking-wider text-blue-400 font-bold bg-blue-500/10 border-r-4 border-blue-500 transition-all">
-            <span class="material-symbols-outlined text-[20px]">hub</span>
-            <span>Network Map</span>
+        <a href="#" data-view="dashboard" class="nav-link active flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-blue-400 bg-blue-500/10 border border-blue-500/20 transition-all duration-200">
+            <span class="material-symbols-outlined text-[20px] text-blue-400">hub</span>
+            <span>Network Visualizer</span>
         </a>
-        <a href="#" data-view="alerts" class="nav-link flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-xs font-mono uppercase tracking-wider text-slate-400 hover:text-slate-200 hover:bg-white/5 transition-all justify-between">
+        <a href="#" data-view="alerts" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800/50 transition-all duration-200 group justify-between">
             <div class="flex items-center gap-3">
-                <span class="material-symbols-outlined text-[20px]">warning</span>
-                <span>Alerts</span>
+                <span class="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-rose-400">warning</span>
+                <span>Risk Alerts</span>
             </div>
-            <span id="nav-alerts-badge" class="px-2 py-0.5 text-[10px] font-mono rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/30">0</span>
+            <span id="nav-alerts-badge" class="px-2 py-0.5 text-xs font-mono rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/30">0</span>
         </a>
-        <a href="#" data-view="policies" class="nav-link flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-xs font-mono uppercase tracking-wider text-slate-400 hover:text-slate-200 hover:bg-white/5 transition-all justify-between">
+        <a href="#" data-view="policies" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800/50 transition-all duration-200 group justify-between">
             <div class="flex items-center gap-3">
-                <span class="material-symbols-outlined text-[20px]">policy</span>
-                <span>Policies</span>
+                <span class="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-emerald-400">policy</span>
+                <span>Auto Policies</span>
             </div>
-            <span id="nav-policies-badge" class="px-2 py-0.5 text-[10px] font-mono rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">0</span>
+            <span id="nav-policies-badge" class="px-2 py-0.5 text-xs font-mono rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">0</span>
         </a>
-        <a href="#" data-view="settings" class="nav-link flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-xs font-mono uppercase tracking-wider text-slate-400 hover:text-slate-200 hover:bg-white/5 transition-all">
-            <span class="material-symbols-outlined text-[20px]">settings</span>
-            <span>Settings</span>
+        <a href="#" data-view="settings" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800/50 transition-all duration-200 group">
+            <span class="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-slate-200">settings</span>
+            <span>Configuration</span>
         </a>
     </nav>
 
     <div class="p-4 border-t border-slate-800/80 space-y-3">
-        <button id="refresh-btn" class="w-full py-2 px-3 rounded-lg bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/40 text-blue-400 font-mono text-xs font-semibold tracking-wider uppercase transition-all flex items-center justify-center gap-2 group">
-            <span class="material-symbols-outlined text-[16px] group-hover:rotate-180 transition-transform duration-500">refresh</span>
-            Refresh Data
+        <button id="refresh-btn" class="w-full py-2.5 px-4 rounded-xl bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/40 text-blue-400 font-mono text-xs font-semibold tracking-wider uppercase transition-all flex items-center justify-center gap-2 group shadow-lg shadow-blue-900/20">
+            <span class="material-symbols-outlined text-[18px] group-hover:rotate-180 transition-transform duration-500">refresh</span>
+            Refresh Telemetry
         </button>
 
-        <div class="flex items-center gap-3 p-2 rounded-lg bg-slate-900/60 border border-slate-800">
-            <div class="w-7 h-7 rounded bg-blue-500/20 border border-blue-400/30 flex items-center justify-center text-blue-400 font-bold text-xs font-mono">
+        <div class="flex items-center gap-3 p-2.5 rounded-xl bg-slate-900/60 border border-slate-800">
+            <div class="w-8 h-8 rounded-lg bg-blue-500/20 border border-blue-400/30 flex items-center justify-center text-blue-400 font-bold text-xs font-mono">
                 SA
             </div>
             <div class="flex-1 min-w-0">
-                <p class="text-xs font-semibold text-slate-200 truncate">Sys Admin</p>
+                <p class="text-xs font-semibold text-slate-200 truncate">SecOps Lead</p>
+                <p class="text-[10px] text-slate-400 font-mono truncate">soc.admin@aegis.internal</p>
             </div>
         </div>
     </div>
 </aside>
 
+<!-- MAIN CONTENT AREA -->
 <main class="flex-1 flex flex-col h-full overflow-hidden relative">
 
-    <header class="h-16 px-6 bg-surface-dark/40 backdrop-blur-md border-b border-slate-800/80 flex items-center justify-between z-30 shrink-0">
+    <header class="h-16 px-8 bg-surface-dark/60 backdrop-blur-md border-b border-slate-800/80 flex items-center justify-between z-30 shrink-0">
         <div class="flex items-center gap-3">
-            <h2 class="text-sm font-semibold text-slate-200 tracking-wide" id="header-title">
+            <h2 class="text-base font-semibold text-white tracking-wide flex items-center gap-2" id="header-title">
                 Zero-Trust Micro-Segmentation Visualizer
             </h2>
+            <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-mono flex items-center gap-1.5">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+                AI Agent Active
+            </span>
         </div>
 
         <div class="flex items-center gap-4 relative">
             <div class="relative">
-                <input id="search-input" type="text" placeholder="Search IP, device, risk..." class="w-64 bg-slate-900/80 border border-slate-700/80 rounded-lg px-3 py-1.5 text-xs text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-blue-500/80 font-mono" />
-                <span class="material-symbols-outlined text-[18px] text-slate-400 absolute right-2.5 top-2">search</span>
+                <input id="search-input" type="text" placeholder="Search IP, device, risk..." class="w-64 bg-slate-900/80 border border-slate-700/80 rounded-xl px-4 py-1.5 text-xs text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-blue-500/80 focus:ring-1 focus:ring-blue-500/50 transition-all font-mono" />
+                <span class="material-symbols-outlined text-[18px] text-slate-400 absolute right-3 top-2">search</span>
             </div>
 
             <div class="relative">
-                <button id="notif-btn" class="w-8 h-8 rounded-lg bg-slate-900/80 border border-slate-700/80 flex items-center justify-center text-slate-400 hover:text-blue-400 transition-all relative">
-                    <span class="material-symbols-outlined text-[18px]">notifications</span>
-                    <span id="notif-badge" class="hidden absolute -top-1 -right-1 bg-rose-500 text-[9px] font-bold text-white rounded-full w-4 h-4 flex items-center justify-center">0</span>
+                <button id="notif-btn" class="w-9 h-9 rounded-xl bg-slate-900/80 border border-slate-700/80 flex items-center justify-center text-slate-300 hover:text-white hover:border-blue-500/50 transition-all relative">
+                    <span class="material-symbols-outlined text-[20px]">notifications</span>
+                    <span id="notif-badge" class="hidden absolute -top-1 -right-1 bg-rose-500 text-[10px] font-bold text-white rounded-full w-4 h-4 flex items-center justify-center shadow-lg shadow-rose-500/50">0</span>
                 </button>
 
-                <div id="notif-dropdown" class="hidden absolute right-0 top-10 w-80 glass-panel rounded-xl p-3.5 z-50 shadow-2xl border border-slate-700/80 bg-slate-900/95">
-                    <div class="flex items-center justify-between pb-2 mb-2 border-b border-slate-800">
-                        <span class="font-mono text-xs text-blue-400 uppercase tracking-wider">🤖 AI Agent Incidents</span>
+                <div id="notif-dropdown" class="hidden absolute right-0 top-12 w-96 glass-panel rounded-2xl p-4 z-50 shadow-2xl border border-slate-700/80 bg-slate-900/95 animate-fade-up">
+                    <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-800">
+                        <span class="font-mono text-xs font-bold text-blue-400 uppercase tracking-wider flex items-center gap-2">
+                            <span class="material-symbols-outlined text-[16px]">smart_toy</span>
+                            AI Agent Triage Feed
+                        </span>
+                        <span class="text-[10px] font-mono text-slate-400">Offline Explainable LLM</span>
                     </div>
-                    <div id="notif-list" class="space-y-2 max-h-64 overflow-y-auto pr-1"></div>
+                    <div id="notif-list" class="space-y-2.5 max-h-80 overflow-y-auto pr-1"></div>
                 </div>
             </div>
         </div>
     </header>
 
-    <div id="toast" class="hidden fixed top-20 right-6 bg-slate-900 border border-blue-500/50 text-slate-200 px-4 py-2 rounded-lg shadow-2xl z-50 font-mono text-xs"></div>
+    <div id="toast" class="hidden fixed top-20 right-8 bg-slate-900 border border-blue-500/50 text-slate-200 px-4 py-2.5 rounded-xl shadow-2xl z-50 font-mono text-xs flex items-center gap-2 animate-fade-up"></div>
 
-    <div class="flex-1 overflow-y-auto p-5 space-y-5 view-panel" id="view-dashboard">
+    <!-- VIEW: DASHBOARD -->
+    <div class="flex-1 overflow-y-auto p-6 space-y-6 view-panel" id="view-dashboard">
 
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div class="glass-panel glass-panel-hover rounded-xl p-4 flex flex-col justify-between">
-                <div class="flex justify-between items-start mb-2">
-                    <span class="font-mono text-[11px] text-slate-400 uppercase tracking-wider">Total Devices</span>
-                    <span class="material-symbols-outlined text-blue-400 text-[20px]">devices</span>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="glass-panel rounded-2xl p-5 glass-panel-hover flex flex-col justify-between border-l-4 border-l-blue-500 animate-fade-up" style="animation-delay: 0.05s; opacity: 0;">
+                <div class="flex items-center justify-between text-slate-400">
+                    <span class="text-xs font-mono font-semibold uppercase tracking-wider">Total Devices</span>
+                    <div class="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-400">
+                        <span class="material-symbols-outlined text-[20px]">devices</span>
+                    </div>
                 </div>
-                <div class="text-3xl font-bold text-white font-mono" id="metric-devices">--</div>
+                <div class="mt-4 flex items-baseline justify-between">
+                    <span class="text-3xl font-extrabold text-white tracking-tight metric-value metric-loading" id="metric-devices">----</span>
+                    <span class="text-xs font-mono text-slate-400">Nodes Monitored</span>
+                </div>
             </div>
 
-            <div class="glass-panel glass-panel-hover rounded-xl p-4 flex flex-col justify-between">
-                <div class="flex justify-between items-start mb-2">
-                    <span class="font-mono text-[11px] text-slate-400 uppercase tracking-wider">Connections</span>
-                    <span class="material-symbols-outlined text-blue-400 text-[20px]">sync_alt</span>
+            <div class="glass-panel rounded-2xl p-5 glass-panel-hover flex flex-col justify-between border-l-4 border-l-cyan-500 animate-fade-up" style="animation-delay: 0.12s; opacity: 0;">
+                <div class="flex items-center justify-between text-slate-400">
+                    <span class="text-xs font-mono font-semibold uppercase tracking-wider">Active Flows</span>
+                    <div class="w-8 h-8 rounded-lg bg-cyan-500/10 flex items-center justify-center text-cyan-400">
+                        <span class="material-symbols-outlined text-[20px]">sync_alt</span>
+                    </div>
                 </div>
-                <div class="text-3xl font-bold text-white font-mono" id="metric-connections">--</div>
+                <div class="mt-4 flex items-baseline justify-between">
+                    <span class="text-3xl font-extrabold text-white tracking-tight metric-value metric-loading" id="metric-connections">----</span>
+                    <span class="text-xs font-mono text-slate-400">Network Edges</span>
+                </div>
             </div>
 
-            <div class="glass-panel glass-panel-hover rounded-xl p-4 flex flex-col justify-between relative overflow-hidden border-rose-500/30">
-                <div class="flex justify-between items-start mb-2">
-                    <span class="font-mono text-[11px] text-rose-400 uppercase tracking-wider">Risk Alerts</span>
-                    <span class="material-symbols-outlined text-rose-400 text-[20px]">warning</span>
+            <div class="glass-panel rounded-2xl p-5 glass-panel-hover flex flex-col justify-between border-l-4 border-l-rose-500 relative overflow-hidden animate-fade-up" style="animation-delay: 0.19s; opacity: 0;">
+                <div class="flex items-center justify-between text-slate-400">
+                    <span class="text-xs font-mono font-semibold uppercase tracking-wider text-rose-400">Risk Anomalies</span>
+                    <div class="w-8 h-8 rounded-lg bg-rose-500/10 flex items-center justify-center text-rose-400">
+                        <span class="material-symbols-outlined text-[20px]">warning</span>
+                    </div>
                 </div>
-                <div class="text-3xl font-bold text-rose-400 font-mono" id="metric-alerts">--</div>
+                <div class="mt-4 flex items-baseline justify-between">
+                    <span class="text-3xl font-extrabold text-rose-400 tracking-tight metric-value metric-loading" id="metric-alerts">----</span>
+                    <span class="text-xs font-mono text-rose-400/80">Requires Review</span>
+                </div>
             </div>
 
-            <div class="glass-panel glass-panel-hover rounded-xl p-4 flex flex-col justify-between">
-                <div class="flex justify-between items-start mb-2">
-                    <span class="font-mono text-[11px] text-slate-400 uppercase tracking-wider">Policies Gen</span>
-                    <span class="material-symbols-outlined text-blue-400 text-[20px]">shield</span>
+            <div class="glass-panel rounded-2xl p-5 glass-panel-hover flex flex-col justify-between border-l-4 border-l-emerald-500 animate-fade-up" style="animation-delay: 0.26s; opacity: 0;">
+                <div class="flex items-center justify-between text-slate-400">
+                    <span class="text-xs font-mono font-semibold uppercase tracking-wider">Policies Gen</span>
+                    <div class="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400">
+                        <span class="material-symbols-outlined text-[20px]">shield</span>
+                    </div>
                 </div>
-                <div class="text-3xl font-bold text-white font-mono" id="metric-policies">--</div>
+                <div class="mt-4 flex items-baseline justify-between">
+                    <span class="text-3xl font-extrabold text-white tracking-tight metric-value metric-loading" id="metric-policies">----</span>
+                    <span class="text-xs font-mono text-slate-400">Rules Ready</span>
+                </div>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 h-[calc(100vh-230px)] min-h-[580px]">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-250px)] min-h-[600px]">
+            <div class="lg:col-span-2 glass-panel rounded-2xl overflow-hidden flex flex-col relative border border-slate-800 animate-fade-up" style="animation-delay: 0.34s; opacity: 0;">
+                <div class="px-5 py-3 border-b border-slate-800/80 flex items-center justify-between bg-slate-900/80 backdrop-blur-md z-10">
+                    <div class="flex items-center gap-2">
+                        <span class="material-symbols-outlined text-blue-400 text-[20px]">my_location</span>
+                        <span class="text-sm font-semibold text-white tracking-wide">Live Micro-Segmentation Topography</span>
+                        <span id="graph-scale-note" class="text-[10px] font-mono text-slate-500 ml-2"></span>
+                    </div>
 
-            <div class="lg:col-span-2 glass-panel rounded-xl overflow-hidden flex flex-col relative border border-slate-800">
-                <div class="px-4 py-2.5 border-b border-slate-800/80 flex justify-between items-center bg-slate-950/60">
-                    <span class="text-xs font-mono font-semibold text-slate-200 flex items-center gap-2">
-                        <span class="material-symbols-outlined text-[18px] text-blue-400">my_location</span>
-                        Live Topography
-                    </span>
-                    <div class="flex gap-4 font-mono text-[11px]">
-                        <div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-blue-400"></span><span class="text-slate-400">Emp</span></div>
-                        <div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-rose-400"></span><span class="text-slate-400">Server</span></div>
-                        <div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-amber-400"></span><span class="text-slate-400">IoT</span></div>
-                        <div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-slate-400"></span><span class="text-slate-400">Guest</span></div>
+                    <div class="flex items-center gap-4 text-xs font-mono">
+                        <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span><span class="text-slate-400">Emp</span></div>
+                        <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span><span class="text-slate-400">Server</span></div>
+                        <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span><span class="text-slate-400">IoT</span></div>
+                        <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-slate-500"></span><span class="text-slate-400">Guest</span></div>
                     </div>
                 </div>
 
-                <div class="flex-1 w-full h-full bg-[#05101e] cursor-crosshair relative" id="d3-container"></div>
-                <div id="node-detail" class="hidden absolute bottom-3 left-3 glass-panel rounded-lg p-3 z-20 bg-slate-900/95 max-w-xs border border-slate-700/80"></div>
+                <div class="flex-1 w-full h-full bg-[#040914] cursor-crosshair relative" id="d3-container"></div>
+                <div id="node-detail" class="hidden absolute bottom-4 left-4 glass-panel rounded-2xl p-4 z-20 bg-slate-900/95 max-w-sm border border-slate-700/80 shadow-2xl animate-fade-up"></div>
             </div>
 
-            <div class="flex flex-col gap-5 h-full overflow-hidden">
-                <div class="glass-panel rounded-xl flex flex-col flex-1 overflow-hidden border border-slate-800">
-                    <div class="px-4 py-2.5 border-b border-slate-800 bg-rose-500/5">
-                        <span class="text-xs font-mono font-semibold text-rose-400 flex items-center gap-2">
+            <div class="flex flex-col gap-6 h-full overflow-hidden">
+                <div class="glass-panel rounded-2xl flex flex-col flex-1 overflow-hidden border border-slate-800">
+                    <div class="px-5 py-3 border-b border-slate-800 bg-rose-500/5 flex items-center justify-between">
+                        <div class="flex items-center gap-2 text-rose-400 font-semibold text-xs font-mono uppercase tracking-wider">
                             <span class="material-symbols-outlined text-[18px]">gpp_bad</span>
-                            Active Anomalies
-                        </span>
+                            Active Risk Anomalies
+                        </div>
                     </div>
-                    <div class="p-3.5 space-y-3 overflow-y-auto flex-1" id="alerts-container">
-                        <p class="text-xs font-mono text-slate-400">Loading alerts...</p>
+                    <div class="p-4 space-y-3 overflow-y-auto flex-1" id="alerts-container">
+                        <p class="text-xs font-mono text-slate-400">Loading risk anomalies...</p>
                     </div>
                 </div>
 
-                <div class="glass-panel rounded-xl flex flex-col flex-1 overflow-hidden border border-slate-800">
-                    <div class="px-4 py-2.5 border-b border-slate-800 bg-blue-500/5">
-                        <span class="text-xs font-mono font-semibold text-blue-400 flex items-center gap-2">
+                <div class="glass-panel rounded-2xl flex flex-col flex-1 overflow-hidden border border-slate-800">
+                    <div class="px-5 py-3 border-b border-slate-800 bg-blue-500/5 flex items-center justify-between">
+                        <div class="flex items-center gap-2 text-blue-400 font-semibold text-xs font-mono uppercase tracking-wider">
                             <span class="material-symbols-outlined text-[18px]">policy</span>
-                            Auto-Generated Policies
-                        </span>
+                            Suggested Policies
+                        </div>
                     </div>
-                    <div class="p-3.5 space-y-3 overflow-y-auto flex-1" id="policies-container">
-                        <p class="text-xs font-mono text-slate-400">Loading policies...</p>
+                    <div class="p-4 space-y-3 overflow-y-auto flex-1" id="policies-container">
+                        <p class="text-xs font-mono text-slate-400">Loading generated policies...</p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="flex-1 overflow-y-auto p-5 space-y-5 view-panel hidden" id="view-alerts">
-        <h2 class="text-lg font-bold text-white mb-2">All Risk Alerts</h2>
+    <!-- VIEW: ALERTS -->
+    <div class="flex-1 overflow-y-auto p-6 space-y-6 view-panel hidden" id="view-alerts">
+        <div class="flex items-center justify-between">
+            <h3 class="text-xl font-bold text-white tracking-tight">All Risk Alerts</h3>
+            <span class="text-xs font-mono text-slate-400">Real-time threat feed</span>
+        </div>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="alerts-view-container"></div>
     </div>
 
-    <div class="flex-1 overflow-y-auto p-5 space-y-5 view-panel hidden" id="view-policies">
-        <h2 class="text-lg font-bold text-white mb-2">All Suggested Policies</h2>
+    <!-- VIEW: POLICIES -->
+    <div class="flex-1 overflow-y-auto p-6 space-y-6 view-panel hidden" id="view-policies">
+        <div class="flex items-center justify-between">
+            <h3 class="text-xl font-bold text-white tracking-tight">Auto-Generated Enforcement Policies</h3>
+            <span class="text-xs font-mono text-slate-400">iptables rules</span>
+        </div>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="policies-view-container"></div>
     </div>
 
-    <div class="flex-1 overflow-y-auto p-5 space-y-5 view-panel hidden" id="view-settings">
-        <h2 class="text-lg font-bold text-white mb-4">Settings</h2>
-        <div class="glass-panel rounded-xl p-5 max-w-lg">
-            <label class="block text-xs font-mono uppercase text-slate-400 mb-2">Backend API URL</label>
-            <input id="api-base-input" type="text" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-xs font-mono text-slate-200 mb-4 focus:outline-none focus:border-blue-500" value="http://localhost:5000" />
-            <button id="save-settings-btn" class="bg-blue-600/20 text-blue-400 border border-blue-500/50 px-4 py-2 rounded font-mono text-xs uppercase tracking-wider hover:bg-blue-600/30 transition-colors">
+    <!-- VIEW: SETTINGS -->
+    <div class="flex-1 overflow-y-auto p-6 space-y-6 view-panel hidden" id="view-settings">
+        <h3 class="text-xl font-bold text-white tracking-tight mb-4">AEGIS Settings & Endpoint Config</h3>
+        <div class="glass-panel rounded-2xl p-6 max-w-xl border border-slate-800">
+            <label class="block text-xs font-mono uppercase tracking-wider text-slate-400 mb-2">Backend REST API Endpoint</label>
+            <input id="api-base-input" type="text" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-xs font-mono text-slate-200 mb-4 focus:outline-none focus:border-blue-500" value="http://localhost:5000" />
+            
+            <button id="save-settings-btn" class="py-2.5 px-5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-mono text-xs font-semibold tracking-wider uppercase transition-all shadow-lg shadow-blue-600/30">
                 Save &amp; Reconnect
             </button>
+            <p class="text-xs text-slate-400 mt-4 leading-relaxed">Ensure your Flask/Python server (`backend_server.py`) is running on the specified endpoint.</p>
         </div>
     </div>
 
 </main>
 
 <script>
-    let API_BASE = "http://localhost:5000";
+    const API_BASE_DEFAULT = "http://localhost:5000";
+    let API_BASE = API_BASE_DEFAULT;
+
     let simulation, svg, g, zoom, tooltip;
     let lastData = null;
 
@@ -355,7 +470,9 @@
             { ip: "10.0.0.1", segment: "server", device_type: "Web Server" },
             { ip: "10.0.0.2", segment: "server", device_type: "DB Server" },
             { ip: "10.0.0.5", segment: "server", device_type: "Auth Domain Controller" },
-            { ip: "172.16.0.10", segment: "iot", device_type: "IP Camera" }
+            { ip: "172.16.0.10", segment: "iot", device_type: "IP Camera" },
+            { ip: "172.16.0.11", segment: "iot", device_type: "Smart Thermostat" },
+            { ip: "192.168.2.100", segment: "guest", device_type: "Guest Phone" }
         ],
         connections: [
             { conn_id: "c101", src_ip: "192.168.1.50", dst_ip: "10.0.0.1" },
@@ -367,21 +484,22 @@
         alerts: [
             { conn_id: "c101", risk_type: "port_scan", risk_level: "MEDIUM", confidence_score: 0.85, src_ip: "192.168.1.50", dst_ip: "10.0.0.1", evidence: "Nmap SYN scan detected across 1024 ports" },
             { conn_id: "c102", risk_type: "sql_injection", risk_level: "HIGH", confidence_score: 0.95, src_ip: "192.168.1.50", dst_ip: "10.0.0.2", evidence: "UNION SELECT payload injected into auth endpoint" },
-            { conn_id: "c103", risk_type: "data_exfiltration", risk_level: "HIGH", confidence_score: 0.90, src_ip: "192.168.1.50", dst_ip: "10.0.0.5", evidence: "500MB outbound data spike over port 443" }
+            { conn_id: "c103", risk_type: "data_exfiltration", risk_level: "HIGH", confidence_score: 0.90, src_ip: "192.168.1.50", dst_ip: "10.0.0.5", evidence: "500MB outbound data spike over port 443" },
+            { conn_id: "c301", risk_type: "unauthorized_iot_access", risk_level: "MEDIUM", confidence_score: 0.75, src_ip: "172.16.0.10", dst_ip: "10.0.0.2", evidence: "IoT camera attempting direct MySQL connection" }
         ],
         policies: [
             { policy_id: "POL-c102", action: "BLOCK_TRAFFIC", iptables_rule: "iptables -A INPUT -s 192.168.1.50 -p tcp --dport 3306 -j DROP" },
             { policy_id: "POL-c103", action: "ISOLATE_HOST", iptables_rule: "iptables -A INPUT -s 192.168.1.50 -j DROP" }
         ],
         notifications: [
-            { notification_id: "N001", priority_score: 8.4, severity: "HIGH", summary: "Multi-vector threat (Port Scan, Sql Injection, Data Exfiltration) from 192.168.1.50", agent_reasoning: ["Correlated 3 alerts within 5-min window -> priority boosted"] }
+            { notification_id: "N001", priority_score: 8.4, severity: "HIGH", summary: "Multi-vector threat (Port Scan, Sql Injection, Data Exfiltration) from 192.168.1.50", agent_reasoning: ["Correlated 3 alerts within 5-min sliding window -> priority boosted"] }
         ]
     };
 
     function radiusForSegment(segment) {
-        if (segment === "server") return 15;
-        if (segment === "employee") return 10;
-        return 8;
+        if (segment === "server") return 16;
+        if (segment === "employee") return 11;
+        return 9;
     }
 
     function buildGraphData(devices, connections, alerts) {
@@ -389,24 +507,73 @@
         const alertByConnId = {};
         alerts.forEach(a => { alertByConnId[a.conn_id] = a.risk_type; });
 
-        const nodes = devices.map(d => ({
-            id: d.ip,
-            group: d.segment,
-            type: d.device_type,
-            radius: radiusForSegment(d.segment)
+        const nodeIds = new Set(devices.map(d => d.ip));
+
+        // ---- DEDUPE: live-capture repeats the same src->dst pair across
+        // many snapshots (every 0.5-1s over the capture window) — a single
+        // long-lived connection shows up dozens of times. We only need to
+        // draw each unique pair ONCE, keeping the risky version if either
+        // occurrence was flagged. ----
+        const seenPairs = new Map();
+        connections.forEach(c => {
+            if (!nodeIds.has(c.src_ip) || !nodeIds.has(c.dst_ip)) return;
+            const key = `${c.src_ip}|${c.dst_ip}`;
+            const isRisky = riskyConnIds.has(c.conn_id);
+            const existing = seenPairs.get(key);
+            if (!existing || (isRisky && !existing.risky)) {
+                seenPairs.set(key, { ...c, risky: isRisky });
+            }
+        });
+        let dedupedLinks = Array.from(seenPairs.values());
+
+        // ---- CAP: even after dedupe, a real/live network can have hundreds
+        // of distinct peers (background apps, browser tabs, etc). Rendering
+        // all of them makes the graph an unreadable hairball. We always keep
+        // every RISKY link (that's the whole point of the demo), and fill
+        // the remaining budget with a sample of normal links for context. ----
+        const MAX_LINKS = 120;
+        let truncated = false;
+        const totalUniquePairs = dedupedLinks.length;
+        if (dedupedLinks.length > MAX_LINKS) {
+            const riskyLinks = dedupedLinks.filter(l => l.risky);
+            const normalLinks = dedupedLinks.filter(l => !l.risky);
+            const budget = Math.max(MAX_LINKS - riskyLinks.length, 0);
+            dedupedLinks = riskyLinks.concat(normalLinks.slice(0, budget));
+            truncated = true;
+        }
+
+        // Only show devices actually referenced in the (possibly trimmed) links
+        const usedIps = new Set();
+        dedupedLinks.forEach(c => { usedIps.add(c.src_ip); usedIps.add(c.dst_ip); });
+
+        const nodes = devices
+            .filter(d => usedIps.has(d.ip))
+            .map(d => ({
+                id: d.ip,
+                group: d.segment,
+                type: d.device_type,
+                radius: radiusForSegment(d.segment)
+            }));
+
+        const links = dedupedLinks.map(c => ({
+            source: c.src_ip,
+            target: c.dst_ip,
+            value: 1,
+            risky: c.risky,
+            alert: alertByConnId[c.conn_id] || null
         }));
 
-        const nodeIds = new Set(nodes.map(n => n.id));
-
-        const links = connections
-            .filter(c => nodeIds.has(c.src_ip) && nodeIds.has(c.dst_ip))
-            .map(c => ({
-                source: c.src_ip,
-                target: c.dst_ip,
-                value: 1,
-                risky: riskyConnIds.has(c.conn_id),
-                alert: alertByConnId[c.conn_id] || null
-            }));
+        // Update the on-screen note so it's clear this is a live, large dataset
+        const noteEl = document.getElementById('graph-scale-note');
+        if (noteEl) {
+            if (truncated) {
+                noteEl.textContent = `(showing ${dedupedLinks.length} of ${totalUniquePairs} unique connections — ${connections.length} total captured — all risky links included)`;
+            } else if (connections.length > dedupedLinks.length) {
+                noteEl.textContent = `(${connections.length} raw captures \u2192 ${dedupedLinks.length} unique connections)`;
+            } else {
+                noteEl.textContent = '';
+            }
+        }
 
         return { nodes, links };
     }
@@ -416,7 +583,7 @@
         container.innerHTML = "";
 
         const width = container.clientWidth || 800;
-        const height = container.clientHeight || 500;
+        const height = container.clientHeight || 600;
 
         svg = d3.select("#d3-container")
             .append("svg")
@@ -427,15 +594,15 @@
         g = svg.append("g");
 
         zoom = d3.zoom()
-            .scaleExtent([0.5, 4])
+            .scaleExtent([0.4, 4])
             .on("zoom", (event) => g.attr("transform", event.transform));
         svg.call(zoom);
 
         simulation = d3.forceSimulation(graphData.nodes)
-            .force("link", d3.forceLink(graphData.links).id(d => d.id).distance(100))
-            .force("charge", d3.forceManyBody().strength(-150))
+            .force("link", d3.forceLink(graphData.links).id(d => d.id).distance(110))
+            .force("charge", d3.forceManyBody().strength(-180))
             .force("center", d3.forceCenter(width / 2, height / 2))
-            .force("collide", d3.forceCollide().radius(d => d.radius + 14));
+            .force("collide", d3.forceCollide().radius(d => d.radius + 16).iterations(2));
 
         if (!tooltip) {
             tooltip = d3.select("body").append("div").attr("class", "d3-tooltip").style("opacity", 0);
@@ -483,21 +650,21 @@
                 const detail = document.getElementById('node-detail');
                 detail.classList.remove('hidden');
                 detail.innerHTML = `
-                    <div class="flex justify-between items-center mb-2 pb-1 border-b border-slate-700 font-mono">
-                        <span class="text-xs font-bold text-blue-400">${d.id}</span>
+                    <div class="flex justify-between items-center mb-3 pb-2 border-b border-slate-700 font-mono">
+                        <span class="text-sm font-bold text-blue-400">${d.id}</span>
                         <button onclick="document.getElementById('node-detail').classList.add('hidden')" class="text-slate-400 hover:text-white">
-                            <span class="material-symbols-outlined text-[14px]">close</span>
+                            <span class="material-symbols-outlined text-[16px]">close</span>
                         </button>
                     </div>
-                    <div class="space-y-1 text-xs font-mono">
-                        <p><span class="text-slate-400">Device:</span> ${d.type}</p>
-                        <p><span class="text-slate-400">Segment:</span> ${d.group.toUpperCase()}</p>
+                    <div class="space-y-1.5 text-xs font-mono">
+                        <p><span class="text-slate-400">Device Type:</span> <span class="text-white">${d.type}</span></p>
+                        <p><span class="text-slate-400">Segment Zone:</span> <span class="text-amber-400 uppercase font-bold">${d.group}</span></p>
                     </div>
                 `;
             });
 
         node.append("circle").attr("r", d => d.radius);
-        node.append("text").attr("dx", 12).attr("dy", ".35em").text(d => d.id);
+        node.append("text").attr("dx", 14).attr("dy", ".35em").text(d => d.id);
 
         simulation.on("tick", () => {
             link.attr("x1", d => d.source.x).attr("y1", d => d.source.y)
@@ -524,26 +691,40 @@
             return;
         }
 
-        el.innerHTML = alerts.map(a => {
+        el.innerHTML = alerts.map((a, idx) => {
             const isHigh = a.risk_level === "HIGH";
             const colorClass = isHigh ? "rose" : "amber";
             const confidencePct = Math.round((a.confidence_score || 0) * 100);
             const searchBlob = `${a.risk_type} ${a.src_ip || ''} ${a.dst_ip || ''}`.toLowerCase();
+            const detailId = `${containerId}-detail-${idx}`;
+            const whenText = a.timestamp ? new Date(a.timestamp).toLocaleString() : null;
 
             return `
-            <div class="alert-card glass-panel rounded-lg p-3 border border-slate-800 relative overflow-hidden" data-search="${searchBlob}">
-                <div class="flex items-center justify-between mb-1">
+            <div class="alert-card glass-panel rounded-xl p-3.5 border border-slate-800 relative overflow-hidden cursor-pointer hover:border-${colorClass}-500/50 transition-colors" data-search="${searchBlob}"
+                 onclick="document.getElementById('${detailId}').classList.toggle('hidden'); this.querySelector('.chevron-icon').classList.toggle('rotate-180')">
+                <div class="flex items-center justify-between mb-1.5">
                     <span class="font-mono text-xs font-bold text-${colorClass}-400 uppercase tracking-wider">${a.risk_type.replace(/_/g, ' ')}</span>
-                    <span class="px-2 py-0.5 rounded bg-${colorClass}-500/10 border border-${colorClass}-500/30 text-[10px] font-mono text-${colorClass}-400">${a.risk_level}</span>
+                    <div class="flex items-center gap-2">
+                        <span class="px-2 py-0.5 rounded-md bg-${colorClass}-500/10 border border-${colorClass}-500/30 text-[10px] font-mono text-${colorClass}-400">${a.risk_level}</span>
+                        <span class="material-symbols-outlined chevron-icon text-slate-500 text-[18px] transition-transform duration-200">expand_more</span>
+                    </div>
                 </div>
                 <div class="space-y-1 text-xs font-mono text-slate-400">
                     <div class="flex justify-between text-[10px] text-slate-400">
-                        <span>Confidence</span><span>${confidencePct}%</span>
+                        <span>Confidence Score</span><span>${confidencePct}%</span>
                     </div>
-                    <div class="w-full h-1 bg-slate-900 rounded overflow-hidden">
+                    <div class="w-full h-1 bg-slate-900 rounded-full overflow-hidden">
                         <div class="h-full bg-${colorClass}-400" style="width:${confidencePct}%"></div>
                     </div>
-                    <p class="mt-1.5 text-[11px] text-slate-300 font-mono">${a.src_ip || '?'} &rarr; ${a.dst_ip || 'Target'}</p>
+                    <p class="mt-2 text-[11px] text-slate-300 font-mono">${a.src_ip || '?'} &rarr; ${a.dst_ip || 'Multiple targets'}</p>
+                </div>
+                <div id="${detailId}" class="hidden mt-3 pt-3 border-t border-slate-800/80 space-y-2">
+                    <p class="text-[10px] font-mono uppercase tracking-wider text-slate-500">Evidence</p>
+                    <p class="text-[12px] text-slate-300 leading-relaxed font-sans">${a.evidence || 'No additional evidence recorded for this alert.'}</p>
+                    <div class="flex flex-wrap gap-x-4 gap-y-1 pt-1 text-[10px] font-mono text-slate-500">
+                        ${whenText ? `<span>&#128337; ${whenText}</span>` : ''}
+                        ${a.conn_id ? `<span>&#128279; Flow: ${a.conn_id}</span>` : ''}
+                    </div>
                 </div>
             </div>`;
         }).join("");
@@ -558,17 +739,17 @@
         }
 
         el.innerHTML = policies.map((p) => `
-            <div class="glass-panel rounded-lg p-3 border border-slate-800 space-y-1.5">
+            <div class="glass-panel rounded-xl p-3.5 border border-slate-800 space-y-2">
                 <div class="flex items-center justify-between">
                     <span class="font-mono text-xs font-bold text-blue-400 uppercase tracking-wider flex items-center gap-1">
-                        <span class="material-symbols-outlined text-[14px]">shield</span>${p.action}
+                        <span class="material-symbols-outlined text-[16px]">shield</span>${p.action}
                     </span>
-                    <span class="text-[9px] font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-1 rounded">READY</span>
+                    <span class="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-1.5 py-0.5 rounded">READY</span>
                 </div>
-                <div class="bg-slate-950 p-2 rounded border border-slate-800 font-mono text-[11px] text-slate-300 overflow-x-auto">
+                <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800 font-mono text-xs text-slate-300 overflow-x-auto">
                     <code>${(p.iptables_rule || "").replace(/\\n/g, "<br>")}</code>
                 </div>
-                <button class="copy-btn w-full py-1 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 text-blue-400 rounded text-[11px] font-mono transition-colors flex items-center justify-center gap-1" data-rule="${(p.iptables_rule || "").replace(/"/g, '&quot;')}">
+                <button class="copy-btn w-full py-1.5 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 text-blue-400 rounded-lg text-xs font-mono transition-colors flex items-center justify-center gap-1.5" data-rule="${(p.iptables_rule || "").replace(/"/g, '&quot;')}">
                     <span class="material-symbols-outlined text-[14px]">content_copy</span>Copy Rule
                 </button>
             </div>
@@ -577,19 +758,18 @@
         el.querySelectorAll(".copy-btn").forEach(btn => {
             btn.addEventListener("click", () => {
                 navigator.clipboard.writeText(btn.dataset.rule).then(() => {
-                    btn.classList.add("copied");
                     const orig = btn.innerHTML;
                     btn.innerHTML = `<span class="material-symbols-outlined text-[14px]">check</span>Copied!`;
-                    setTimeout(() => {
-                        btn.innerHTML = orig;
-                        btn.classList.remove("copied");
-                    }, 1500);
+                    setTimeout(() => { btn.innerHTML = orig; }, 1500);
                 });
             });
         });
     }
 
     function renderMetrics(metrics) {
+        const fields = ['metric-devices', 'metric-connections', 'metric-alerts', 'metric-policies'];
+        fields.forEach(id => document.getElementById(id).classList.remove('metric-loading'));
+
         document.getElementById('metric-devices').textContent = metrics.total_devices ?? '--';
         document.getElementById('metric-connections').textContent = metrics.total_connections ?? '--';
         document.getElementById('metric-alerts').textContent = metrics.total_alerts ?? '--';
@@ -604,21 +784,29 @@
         const list = document.getElementById('notif-list');
         if (!notifications || notifications.length === 0) {
             badge.classList.add('hidden');
-            list.innerHTML = `<p class="text-xs font-mono text-slate-400">No active incidents.</p>`;
+            list.innerHTML = `<p class="text-xs font-mono text-slate-400">No active incidents. AI Agent monitoring...</p>`;
             return;
         }
         badge.textContent = notifications.length;
         badge.classList.remove('hidden');
 
         list.innerHTML = notifications.slice(0, 6).map(n => `
-            <div class="text-xs border-l-2 ${n.severity === 'HIGH' ? 'border-rose-500' : 'border-amber-500'} pl-2.5 py-1.5 bg-slate-950/50 rounded-r-lg">
+            <div class="text-xs border-l-2 ${n.severity === 'HIGH' ? 'border-rose-500' : 'border-amber-500'} pl-3 py-2 bg-slate-950/50 rounded-r-xl">
                 <div class="flex items-center justify-between mb-1 font-mono">
                     <span class="${n.severity === 'HIGH' ? 'text-rose-400' : 'text-amber-400'} font-bold">${n.severity}</span>
-                    <span class="text-[9px] text-slate-400">Score: ${n.priority_score}</span>
+                    <span class="text-[10px] text-slate-400">Score: ${n.priority_score}</span>
                 </div>
-                <p class="text-slate-200 text-xs">${n.summary}</p>
+                <p class="text-slate-200 text-xs font-sans">${n.summary}</p>
+                ${n.agent_reasoning ? `<p class="text-[10px] font-mono text-slate-400 mt-1 italic">🤖 ${n.agent_reasoning[0]}</p>` : ''}
             </div>
         `).join("");
+    }
+
+    function showToast(msg) {
+        const toast = document.getElementById('toast');
+        toast.innerHTML = `<span class="material-symbols-outlined text-[16px] text-blue-400">info</span>${msg}`;
+        toast.classList.remove('hidden');
+        setTimeout(() => toast.classList.add('hidden'), 2500);
     }
 
     function switchView(viewName) {
@@ -637,48 +825,55 @@
         const statusText = document.getElementById('status-text');
 
         try {
-            statusText.textContent = "Connecting to backend...";
-            const res = await fetch(`${API_BASE}/api/summary`, { signal: AbortSignal.timeout(1500) });
-            if (res.ok) {
-                const data = await res.json();
-                lastData = data;
+            statusText.textContent = "Connecting to AEGIS backend...";
 
-                renderMetrics(data.metrics);
-                renderAlerts(data.alerts, 'alerts-container');
-                renderAlerts(data.alerts, 'alerts-view-container');
-                renderPolicies(data.policies, 'policies-container');
-                renderPolicies(data.policies, 'policies-view-container');
-                renderNotifications(data.notifications);
+            const res = await fetch(`${API_BASE}/api/summary`);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+            lastData = data;
 
-                const graphData = buildGraphData(data.devices, data.connections, data.alerts);
-                renderGraph(graphData);
+            renderMetrics(data.metrics);
+            renderAlerts(data.alerts, 'alerts-container');
+            renderAlerts(data.alerts, 'alerts-view-container');
+            renderPolicies(data.policies, 'policies-container');
+            renderPolicies(data.policies, 'policies-view-container');
+            renderNotifications(data.notifications);
 
-                statusEl.className = "fixed bottom-3 right-3 z-50 font-mono text-xs px-3.5 py-1.5 rounded-lg border backdrop-blur-md shadow-xl bg-emerald-950/80 border-emerald-500/40 text-emerald-400 flex items-center gap-2";
-                statusText.textContent = "Live Data Connected";
-                return;
-            }
-        } catch (e) {
-            // Fallback demo mode
+            const graphData = buildGraphData(data.devices, data.connections, data.alerts);
+            renderGraph(graphData);
+
+            statusEl.className = "fixed bottom-4 right-4 z-50 font-mono text-xs px-3.5 py-2 rounded-lg border backdrop-blur-md shadow-xl bg-emerald-950/80 border-emerald-500/40 text-emerald-400 flex items-center gap-2";
+            statusText.textContent = "Live Telemetry Connected";
+        } catch (err) {
+            console.warn("Backend offline, rendering fallback demo mode:", err);
+            lastData = MOCK_FALLBACK;
+
+            renderMetrics(MOCK_FALLBACK.metrics);
+            renderAlerts(MOCK_FALLBACK.alerts, 'alerts-container');
+            renderAlerts(MOCK_FALLBACK.alerts, 'alerts-view-container');
+            renderPolicies(MOCK_FALLBACK.policies, 'policies-container');
+            renderPolicies(MOCK_FALLBACK.policies, 'policies-view-container');
+            renderNotifications(MOCK_FALLBACK.notifications);
+
+            const graphData = buildGraphData(MOCK_FALLBACK.devices, MOCK_FALLBACK.connections, MOCK_FALLBACK.alerts);
+            renderGraph(graphData);
+
+            statusEl.className = "fixed bottom-4 right-4 z-50 font-mono text-xs px-3.5 py-2 rounded-lg border backdrop-blur-md shadow-xl bg-slate-900/80 border-amber-500/40 text-amber-400 flex items-center gap-2";
+            statusText.textContent = "Demo Mode (Backend Offline)";
         }
-
-        statusText.textContent = "Demo Mode (Backend Offline)";
-        statusEl.className = "fixed bottom-3 right-3 z-50 font-mono text-xs px-3.5 py-1.5 rounded-lg border backdrop-blur-md shadow-xl bg-slate-900/80 border-amber-500/40 text-amber-400 flex items-center gap-2";
-
-        lastData = MOCK_FALLBACK;
-        renderMetrics(MOCK_FALLBACK.metrics);
-        renderAlerts(MOCK_FALLBACK.alerts, 'alerts-container');
-        renderAlerts(MOCK_FALLBACK.alerts, 'alerts-view-container');
-        renderPolicies(MOCK_FALLBACK.policies, 'policies-container');
-        renderPolicies(MOCK_FALLBACK.policies, 'policies-view-container');
-        renderNotifications(MOCK_FALLBACK.notifications);
-
-        const graphData = buildGraphData(MOCK_FALLBACK.devices, MOCK_FALLBACK.connections, MOCK_FALLBACK.alerts);
-        renderGraph(graphData);
     }
 
     document.addEventListener('DOMContentLoaded', () => {
         loadDashboard();
         document.getElementById('refresh-btn').addEventListener('click', loadDashboard);
+
+        // ---- AUTO-REFRESH: backend ab har ~30-40s mein khud naya live-data
+        // banata rehta hai (background loop). Dashboard ko bhi khud-ba-khud
+        // naya data poll karna chahiye, taaki koi manual click na karna pade. ----
+        const AUTO_REFRESH_INTERVAL_MS = 20000; // har 20 second mein poll karo
+        setInterval(() => {
+            loadDashboard();
+        }, AUTO_REFRESH_INTERVAL_MS);
 
         document.querySelectorAll('.nav-link').forEach(link => {
             link.addEventListener('click', (e) => {
@@ -706,6 +901,25 @@
             if (!notifDropdown.contains(e.target) && e.target !== notifBtn) {
                 notifDropdown.classList.add('hidden');
             }
+        });
+
+        document.getElementById('save-settings-btn').addEventListener('click', () => {
+            const newUrl = document.getElementById('api-base-input').value.trim();
+            if (newUrl) {
+                API_BASE = newUrl;
+                showToast("Endpoint updated — reconnecting...");
+                loadDashboard();
+            }
+        });
+
+        window.addEventListener('resize', () => {
+            if (!simulation) return;
+            const container = document.getElementById('d3-container');
+            const newWidth = container.clientWidth;
+            const newHeight = container.clientHeight;
+            svg.attr("viewBox", [0, 0, newWidth, newHeight]);
+            simulation.force("center", d3.forceCenter(newWidth / 2, newHeight / 2));
+            simulation.alpha(0.3).restart();
         });
     });
 </script>
