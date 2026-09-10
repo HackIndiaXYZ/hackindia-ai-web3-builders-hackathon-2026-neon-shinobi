@@ -1,0 +1,21 @@
+[
+  {
+    "notification_id": "N001",
+    "timestamp": "2026-09-11T00:05:12.404018",
+    "src_ip": "2402:3a80:4215:1ace:14ff:90a1:6608:da35",
+    "alert_count": 1,
+    "risk_types": [
+      "FAN_OUT_LATERAL_MOVEMENT"
+    ],
+    "severity": "MEDIUM",
+    "priority_score": 3.2,
+    "summary": "Fan Out Lateral Movement detected from 2402:3a80:4215:1ace:14ff:90a1:6608:da35 (1 event(s)).",
+    "agent_reasoning": [
+      "Detected 1 alert(s) from source 2402:3a80:4215:1ace:14ff:90a1:6608:da35 within a 5-minute window -> correlated into one incident.",
+      "Highest severity among grouped alerts: MEDIUM -> base priority score established.",
+      "Threat signatures involved: FAN_OUT_LATERAL_MOVEMENT."
+    ],
+    "recommended_policy": "iptables -A FORWARD -s 2402:3a80:4215:1ace:14ff:90a1:6608:da35 -m limit --limit 5/min -j ACCEPT\niptables -A FORWARD -s 2402:3a80:4215:1ace:14ff:90a1:6608:da35 -j DROP",
+    "status": "AWAITING_ANALYST_REVIEW"
+  }
+]

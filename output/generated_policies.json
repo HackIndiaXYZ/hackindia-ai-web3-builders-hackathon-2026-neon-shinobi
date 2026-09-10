@@ -1,0 +1,18 @@
+[
+  {
+    "policy_id": "POL-C31033",
+    "generated_at": "2026-09-11T00:05:12.455966",
+    "based_on_alert": "FAN_OUT_LATERAL_MOVEMENT",
+    "risk_level": "MEDIUM",
+    "target": {
+      "src_ip": "2402:3a80:4215:1ace:14ff:90a1:6608:da35",
+      "dst_ip": null
+    },
+    "action": "RATE_LIMIT",
+    "iptables_rule": "iptables -A FORWARD -s 2402:3a80:4215:1ace:14ff:90a1:6608:da35 -m limit --limit 5/min -j ACCEPT\niptables -A FORWARD -s 2402:3a80:4215:1ace:14ff:90a1:6608:da35 -j DROP",
+    "nftables_rule": "nft add rule inet filter forward ip saddr 2402:3a80:4215:1ace:14ff:90a1:6608:da35 limit rate 5/minute accept",
+    "explanation": "Rate-limits source due to FAN_OUT_LATERAL_MOVEMENT pattern (no single destination).",
+    "evidence": "Source 2402:3a80:4215:1ace:14ff:90a1:6608:da35 connected to 44 distinct destinations it hadn't contacted before this session's baseline \u2014 unusually broad access pattern, possible reconnaissance or lateral movement.",
+    "status": "SUGGESTED \u2014 requires human review before deployment"
+  }
+]

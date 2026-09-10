@@ -1,0 +1,181 @@
+{
+  "contract_name": "AuditAnchor",
+  "abi": [
+    {
+      "name": "Anchored",
+      "inputs": [
+        {
+          "name": "id",
+          "type": "uint256",
+          "indexed": true
+        },
+        {
+          "name": "content_hash",
+          "type": "bytes32",
+          "indexed": true
+        },
+        {
+          "name": "label",
+          "type": "string",
+          "indexed": false
+        },
+        {
+          "name": "timestamp",
+          "type": "uint256",
+          "indexed": false
+        },
+        {
+          "name": "sender",
+          "type": "address",
+          "indexed": false
+        }
+      ],
+      "anonymous": false,
+      "type": "event"
+    },
+    {
+      "stateMutability": "nonpayable",
+      "type": "function",
+      "name": "anchor",
+      "inputs": [
+        {
+          "name": "content_hash",
+          "type": "bytes32"
+        },
+        {
+          "name": "label",
+          "type": "string"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ]
+    },
+    {
+      "stateMutability": "view",
+      "type": "function",
+      "name": "get_anchor",
+      "inputs": [
+        {
+          "name": "id",
+          "type": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "tuple",
+          "components": [
+            {
+              "name": "content_hash",
+              "type": "bytes32"
+            },
+            {
+              "name": "label",
+              "type": "string"
+            },
+            {
+              "name": "timestamp",
+              "type": "uint256"
+            },
+            {
+              "name": "sender",
+              "type": "address"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "stateMutability": "view",
+      "type": "function",
+      "name": "verify",
+      "inputs": [
+        {
+          "name": "content_hash",
+          "type": "bytes32"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ]
+    },
+    {
+      "stateMutability": "view",
+      "type": "function",
+      "name": "anchors",
+      "inputs": [
+        {
+          "name": "arg0",
+          "type": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "tuple",
+          "components": [
+            {
+              "name": "content_hash",
+              "type": "bytes32"
+            },
+            {
+              "name": "label",
+              "type": "string"
+            },
+            {
+              "name": "timestamp",
+              "type": "uint256"
+            },
+            {
+              "name": "sender",
+              "type": "address"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "stateMutability": "view",
+      "type": "function",
+      "name": "anchor_count",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ]
+    },
+    {
+      "stateMutability": "view",
+      "type": "function",
+      "name": "hash_to_id",
+      "inputs": [
+        {
+          "name": "arg0",
+          "type": "bytes32"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ]
+    },
+    {
+      "stateMutability": "nonpayable",
+      "type": "constructor",
+      "inputs": [],
+      "outputs": []
+    }
+  ],
+  "bytecode": "0x3461001a575f60015561034961001e61000039610349610000f35b5f80fd5f3560e01c60026005820660011b61033f01601e395f51565b631a8512ea81186103375760443610341761033b5760243560040180356080811161033b57506020813501808260403750506001546001810181811061033b57905060e0525f60e0516020525f5260405f206004358155602060405101600182015f82601f0160051c6005811161033b5780156100a857905b8060051b6040015181840155600101818118610091575b505050504260068201553360078201555060e05160026004356020525f5260405f205560e05160015560043560e0517f98c74d1af28489b7fff3f8b41bb6f728006636843f5740de95377a3efdf2d7b2606080610100528061010001602060405101806040835e508051806020830101601f825f03163682375050601f19601f8251602001011690508101905042610120523361014052610100a3602060e0f35b63b8ea734281186103375760243610341761033b576020806040525f6004356020525f5260405f20816040016080825482528060208301526001830181830160208254015f81601f0160051c6005811161033b5780156101bb57905b808501548160051b8501526001018181186101a5575b5050508051806020830101601f825f03163682375050601f19601f825160200101169050905081019050600683015460408301526007830154606083015290509050810190506040f35b6375e3661681186103375760243610341761033b5760026004356020525f5260405f205460405260206040f35b63368b733e81186102ee5760243610341761033b576020806040525f6004356020525f5260405f20816040016080825482528060208301526001830181830160208254015f81601f0160051c6005811161033b5780156102a457905b808501548160051b85015260010181811861028e575b5050508051806020830101601f825f03163682375050601f19601f825160200101169050905081019050600683015460408301526007830154606083015290509050810190506040f35b63020b130381186103375760243610341761033b5760026004356020525f5260405f205460405260206040f35b637ef70e1e8118610337573461033b5760015460405260206040f35b5f5ffd5b5f80fd02320018031b02050149855820d96d287c46db311ffee17610e2fd6820b96a6155c72fe0d7c2d3c1dd71c5d741190349810a00a1657679706572830004030036"
+}

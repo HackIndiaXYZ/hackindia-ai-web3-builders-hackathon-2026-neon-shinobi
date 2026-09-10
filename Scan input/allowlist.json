@@ -1,0 +1,6 @@
+{
+  "_comment": "Destinations listed here are excluded from EVERY risk rule (cross-segment, unexpected-service, fan-out, port-scan) — not just one. Use this for things you already know are fine: your own DNS server, a known internal update server, a monitoring tool that legitimately talks to lots of hosts, etc. JSON doesn't support real comments, hence this '_comment' key — it's ignored by the loader.",
+  "ips": [],
+  "cidrs": [],
+  "ports": []
+}

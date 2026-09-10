@@ -1,0 +1,13 @@
+[
+  {
+    "timestamp": "2026-09-11T00:05:12.404018",
+    "conn_id": "C31033",
+    "risk_type": "FAN_OUT_LATERAL_MOVEMENT",
+    "risk_level": "MEDIUM",
+    "confidence_score": 0.7,
+    "evidence": "Source 2402:3a80:4215:1ace:14ff:90a1:6608:da35 connected to 44 distinct destinations it hadn't contacted before this session's baseline \u2014 unusually broad access pattern, possible reconnaissance or lateral movement.",
+    "src_ip": "2402:3a80:4215:1ace:14ff:90a1:6608:da35",
+    "dst_ip": null,
+    "src_process": "firefox.exe"
+  }
+]

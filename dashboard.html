@@ -1,0 +1,1332 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Zero-Trust Micro-Segmentation Visualizer — Aegis SOC</title>
+<link rel="stylesheet" href="tailwind.css"/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap"/>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+
+<style>
+    /* ============ DESIGN TOKENS ============ */
+    :root,
+    html[data-theme="dark"] {
+        --bg: #0D1117;
+        --surface: #121821;
+        --card: #171F2A;
+        --card-hover: #1B2430;
+        --border: #262F3B;
+        --border-soft: #1D2530;
+
+        --text-primary: #E8EBF0;
+        --text-secondary: #9AA4B2;
+        --text-muted: #626D7D;
+
+        --accent: #3B82F6;
+        --accent-soft: rgba(59, 130, 246, 0.14);
+        --accent-border: rgba(59, 130, 246, 0.35);
+
+        --risk-high: #EF4444;
+        --risk-high-soft: rgba(239, 68, 68, 0.12);
+        --risk-medium: #F59E0B;
+        --risk-medium-soft: rgba(245, 158, 11, 0.12);
+        --success: #22C55E;
+        --success-soft: rgba(34, 197, 94, 0.12);
+
+        --node-server: #EF4444;
+        --node-employee: #3B82F6;
+        --node-iot: #F59E0B;
+        --node-guest: #8B96A5;
+        --link-default: #364152;
+        --graph-bg: #0A0E14;
+
+        --shadow-card: none;
+        --grid-opacity: 0.05;
+    }
+
+    html[data-theme="light"] {
+        --bg: #F4F6F8;
+        --surface: #FFFFFF;
+        --card: #FFFFFF;
+        --card-hover: #FAFBFC;
+        --border: #E2E6EB;
+        --border-soft: #EBEEF1;
+
+        --text-primary: #161B22;
+        --text-secondary: #545F6E;
+        --text-muted: #8992A0;
+
+        --accent: #2563EB;
+        --accent-soft: rgba(37, 99, 235, 0.08);
+        --accent-border: rgba(37, 99, 235, 0.3);
+
+        --risk-high: #DC2626;
+        --risk-high-soft: rgba(220, 38, 38, 0.08);
+        --risk-medium: #B45309;
+        --risk-medium-soft: rgba(180, 83, 9, 0.10);
+        --success: #059669;
+        --success-soft: rgba(5, 150, 105, 0.08);
+
+        --node-server: #DC2626;
+        --node-employee: #2563EB;
+        --node-iot: #B45309;
+        --node-guest: #6B7684;
+        --link-default: #CBD3DC;
+        --graph-bg: #FBFCFD;
+
+        --shadow-card: 0 1px 2px rgba(20, 26, 34, 0.04), 0 1px 6px rgba(20, 26, 34, 0.04);
+        --grid-opacity: 0.5;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+        background-color: var(--bg);
+        color: var(--text-primary);
+        font-family: 'IBM Plex Sans', sans-serif;
+        overflow-x: hidden;
+        transition: background-color 0.2s ease, color 0.2s ease;
+    }
+
+    .font-mono { font-family: 'IBM Plex Mono', monospace; }
+
+    #grid-bg {
+        position: fixed;
+        inset: -40px;
+        z-index: 0;
+        opacity: var(--grid-opacity);
+        pointer-events: none;
+        background-image:
+            linear-gradient(to right, var(--border-soft) 1px, transparent 1px),
+            linear-gradient(to bottom, var(--border-soft) 1px, transparent 1px);
+        background-size: 40px 40px;
+    }
+
+    .surface { background-color: var(--surface); }
+    .card {
+        background-color: var(--card);
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow-card);
+        transition: border-color 0.15s ease, background-color 0.15s ease;
+    }
+    .card-hover:hover { border-color: var(--accent-border); background-color: var(--card-hover); }
+
+    .text-primary { color: var(--text-primary); }
+    .text-secondary { color: var(--text-secondary); }
+    .text-muted { color: var(--text-muted); }
+    .border-default { border-color: var(--border); }
+
+    .badge {
+        display: inline-flex; align-items: center; gap: 4px;
+        padding: 2px 8px; border-radius: 5px;
+        font-size: 10px; font-weight: 600; letter-spacing: 0.03em;
+        border: 1px solid transparent;
+    }
+    .badge-high { color: var(--risk-high); background: var(--risk-high-soft); border-color: color-mix(in srgb, var(--risk-high) 35%, transparent); }
+    .badge-medium { color: var(--risk-medium); background: var(--risk-medium-soft); border-color: color-mix(in srgb, var(--risk-medium) 35%, transparent); }
+    .badge-ready { color: var(--success); background: var(--success-soft); border-color: color-mix(in srgb, var(--success) 35%, transparent); }
+    .badge-neutral { color: var(--text-secondary); background: var(--border-soft); border-color: var(--border); }
+
+    .link { stroke: var(--link-default); stroke-width: 1.4px; stroke-opacity: 0.8; transition: stroke 0.2s; }
+    .link.risky-high { stroke: var(--risk-high); stroke-width: 2px; stroke-opacity: 0.9; }
+    .link.risky-medium { stroke: var(--risk-medium); stroke-width: 2px; stroke-opacity: 0.9; }
+
+    .node circle {
+        stroke: var(--graph-bg);
+        stroke-width: 2px;
+        transition: stroke-width 0.15s ease, filter 0.15s ease;
+        cursor: pointer;
+    }
+    .node:hover circle { stroke: var(--accent); stroke-width: 3px; }
+    .node text {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 10px;
+        font-weight: 500;
+        fill: var(--text-secondary);
+        pointer-events: none;
+    }
+    .node.server circle { fill: var(--node-server); }
+    .node.employee circle { fill: var(--node-employee); }
+    .node.iot circle { fill: var(--node-iot); }
+    .node.guest circle { fill: var(--node-guest); }
+    .node.internet circle { fill: #A78BFA; }
+    .node.local_network circle { fill: #14B8A6; }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+    .d3-tooltip {
+        position: absolute;
+        padding: 10px 14px;
+        font: 12px 'IBM Plex Mono', monospace;
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        pointer-events: none;
+        opacity: 0;
+        color: var(--text-primary);
+        z-index: 100;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+        transition: opacity 0.15s ease-in-out;
+    }
+
+    .copy-btn.copied { background-color: var(--success-soft); border-color: var(--success); color: var(--success); }
+
+    .nav-link { color: var(--text-secondary); border-right: 3px solid transparent; }
+    .nav-link:hover { color: var(--text-primary); background: var(--border-soft); }
+    .nav-link.active { color: var(--accent); background: var(--accent-soft); border-right-color: var(--accent); font-weight: 600; }
+
+    input[type="text"] {
+        background-color: var(--surface);
+        border: 1px solid var(--border);
+        color: var(--text-primary);
+    }
+    input[type="text"]::placeholder { color: var(--text-muted); }
+    input[type="text"]:focus { outline: none; border-color: var(--accent); }
+
+    /* theme toggle */
+    .theme-toggle {
+        display: flex; align-items: center; background: var(--surface);
+        border: 1px solid var(--border); border-radius: 999px; padding: 2px; gap: 2px;
+    }
+    .theme-toggle button {
+        border: none; background: transparent; color: var(--text-muted);
+        width: 28px; height: 24px; border-radius: 999px; display: flex; align-items: center; justify-content: center;
+        cursor: pointer; transition: all 0.15s ease;
+    }
+    .theme-toggle button.active { background: var(--accent); color: #fff; }
+
+    .empty-state {
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        gap: 10px; text-align: center; color: var(--text-muted); padding: 32px 20px; height: 100%;
+    }
+    .empty-state .material-symbols-outlined { font-size: 34px; color: var(--text-muted); opacity: 0.6; }
+    .empty-state code {
+        font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--text-secondary);
+        background: var(--surface); border: 1px solid var(--border); padding: 3px 8px; border-radius: 5px;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        * { transition: none !important; animation: none !important; }
+    }
+</style>
+</head>
+<body class="antialiased flex h-screen overflow-hidden select-none">
+
+<div id="grid-bg"></div>
+
+<div id="connection-status" class="fixed bottom-3 right-3 z-50 font-mono text-xs px-3.5 py-1.5 rounded-lg border card flex items-center gap-2">
+    <span id="status-dot" class="w-2 h-2 rounded-full" style="background: var(--text-muted);"></span>
+    <span id="status-text" class="text-secondary">Connecting to backend…</span>
+</div>
+
+<aside class="w-[264px] surface border-r border-default flex flex-col h-full z-40 relative hidden md:flex shrink-0">
+    <div class="px-5 py-5 border-b border-default">
+        <h1 class="text-[17px] font-semibold text-primary tracking-tight flex items-center gap-2">
+            <span class="material-symbols-outlined text-[22px]" style="color:var(--accent)">shield_lock</span>
+            SOC Command
+        </h1>
+        <p class="text-[11px] font-mono text-muted mt-1">Aegis · Zero-Trust Platform</p>
+    </div>
+
+    <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto" id="sidebar-nav">
+        <a href="#" data-view="dashboard" class="nav-link active flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-[13px] transition-all">
+            <span class="material-symbols-outlined text-[19px]">hub</span>
+            <span>Network map</span>
+        </a>
+        <a href="#" data-view="alerts" class="nav-link flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-[13px] transition-all justify-between">
+            <div class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-[19px]">warning</span>
+                <span>Alerts</span>
+            </div>
+            <span id="nav-alerts-badge" class="badge badge-neutral">0</span>
+        </a>
+        <a href="#" data-view="policies" class="nav-link flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-[13px] transition-all justify-between">
+            <div class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-[19px]">policy</span>
+                <span>Policies</span>
+            </div>
+            <span id="nav-policies-badge" class="badge badge-neutral">0</span>
+        </a>
+        <a href="#" data-view="history" class="nav-link flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-[13px] transition-all">
+            <span class="material-symbols-outlined text-[19px]">monitoring</span>
+            <span>History</span>
+        </a>
+        <a href="#" data-view="settings" class="nav-link flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-[13px] transition-all">
+            <span class="material-symbols-outlined text-[19px]">settings</span>
+            <span>Settings</span>
+        </a>
+    </nav>
+
+    <div class="p-4 border-t border-default space-y-3">
+        <div class="flex items-center justify-between">
+            <span class="text-[11px] font-mono text-muted">Appearance</span>
+            <div class="theme-toggle" id="theme-toggle">
+                <button data-theme-choice="light" title="Light">
+                    <span class="material-symbols-outlined text-[15px]">light_mode</span>
+                </button>
+                <button data-theme-choice="dark" title="Dark">
+                    <span class="material-symbols-outlined text-[15px]">dark_mode</span>
+                </button>
+            </div>
+        </div>
+
+        <button id="refresh-btn" class="w-full py-2 px-3 rounded-lg border border-default text-[12px] font-medium transition-all flex items-center justify-center gap-2 group" style="color:var(--accent); background: var(--accent-soft);">
+            <span class="material-symbols-outlined text-[16px] group-hover:rotate-180 transition-transform duration-500">refresh</span>
+            Refresh data
+        </button>
+
+        <div class="flex items-center gap-3 p-2 rounded-lg border border-default">
+            <div class="w-7 h-7 rounded-md flex items-center justify-center font-semibold text-[11px] font-mono" style="background:var(--accent-soft); color:var(--accent);">
+                SA
+            </div>
+            <div class="flex-1 min-w-0">
+                <p class="text-[12px] font-medium text-primary truncate">Sys Admin</p>
+            </div>
+        </div>
+    </div>
+</aside>
+
+<main class="flex-1 flex flex-col h-full overflow-hidden relative">
+
+    <header class="h-16 px-6 surface border-b border-default flex items-center justify-between z-30 shrink-0">
+        <div class="flex items-center gap-3">
+            <h2 class="text-[14px] font-medium text-primary tracking-wide" id="header-title">
+                Zero-Trust Micro-Segmentation Visualizer
+            </h2>
+        </div>
+
+        <div class="flex items-center gap-3 relative">
+            <div class="relative">
+                <input id="search-input" type="text" placeholder="Search IP, device, risk…" class="w-64 rounded-lg px-3 py-1.5 text-xs font-mono" />
+                <span class="material-symbols-outlined text-[18px] text-muted absolute right-2.5 top-2">search</span>
+            </div>
+
+            <div class="relative">
+                <button id="notif-btn" class="w-8 h-8 rounded-lg border border-default flex items-center justify-center text-secondary transition-all relative">
+                    <span class="material-symbols-outlined text-[18px]">notifications</span>
+                    <span id="notif-badge" class="hidden absolute -top-1 -right-1 text-[9px] font-semibold text-white rounded-full w-4 h-4 flex items-center justify-center" style="background: var(--risk-high);">0</span>
+                </button>
+
+                <div id="notif-dropdown" class="hidden absolute right-0 top-10 w-80 card rounded-xl p-3.5 z-50 shadow-2xl">
+                    <div class="flex items-center justify-between pb-2 mb-2 border-b border-default">
+                        <span class="font-mono text-[11px] text-secondary">AI agent incidents</span>
+                    </div>
+                    <div id="notif-list" class="space-y-2 max-h-64 overflow-y-auto pr-1"></div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div id="toast" class="hidden fixed top-20 right-6 card text-primary px-4 py-2 rounded-lg shadow-2xl z-50 font-mono text-xs"></div>
+
+    <div class="flex-1 overflow-y-auto p-5 space-y-5 view-panel" id="view-dashboard">
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="card card-hover rounded-xl p-4 flex flex-col justify-between">
+                <div class="flex justify-between items-start mb-2">
+                    <span class="font-mono text-[11px] text-muted">Total devices</span>
+                    <span class="material-symbols-outlined text-[19px]" style="color:var(--accent)">devices</span>
+                </div>
+                <div class="text-3xl font-semibold text-primary font-mono" id="metric-devices">–</div>
+            </div>
+
+            <div class="card card-hover rounded-xl p-4 flex flex-col justify-between">
+                <div class="flex justify-between items-start mb-2">
+                    <span class="font-mono text-[11px] text-muted">Connections</span>
+                    <span class="material-symbols-outlined text-[19px]" style="color:var(--accent)">sync_alt</span>
+                </div>
+                <div class="text-3xl font-semibold text-primary font-mono" id="metric-connections">–</div>
+            </div>
+
+            <div class="card card-hover rounded-xl p-4 flex flex-col justify-between relative overflow-hidden" style="border-color: color-mix(in srgb, var(--risk-high) 30%, var(--border));">
+                <div class="flex justify-between items-start mb-2">
+                    <span class="font-mono text-[11px]" style="color:var(--risk-high)">Risk alerts</span>
+                    <span class="material-symbols-outlined text-[19px]" style="color:var(--risk-high)">warning</span>
+                </div>
+                <div class="text-3xl font-semibold font-mono" id="metric-alerts" style="color:var(--risk-high)">–</div>
+            </div>
+
+            <div class="card card-hover rounded-xl p-4 flex flex-col justify-between">
+                <div class="flex justify-between items-start mb-2">
+                    <span class="font-mono text-[11px] text-muted">Policies generated</span>
+                    <span class="material-symbols-outlined text-[19px]" style="color:var(--accent)">shield</span>
+                </div>
+                <div class="text-3xl font-semibold text-primary font-mono" id="metric-policies">–</div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 h-[calc(100vh-230px)] min-h-[580px]">
+
+            <div class="lg:col-span-2 card rounded-xl overflow-hidden flex flex-col relative">
+                <div class="px-4 py-2.5 border-b border-default flex justify-between items-center">
+                    <span class="text-[12px] font-medium text-primary flex items-center gap-2">
+                        <span class="material-symbols-outlined text-[18px]" style="color:var(--accent)">my_location</span>
+                        Live topology
+                    </span>
+                    <div class="flex gap-4 font-mono text-[11px]">
+                        <div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full" style="background:var(--node-employee)"></span><span class="text-secondary">Employee</span></div>
+                        <div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full" style="background:var(--node-server)"></span><span class="text-secondary">Server</span></div>
+                        <div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full" style="background:var(--node-iot)"></span><span class="text-secondary">IoT</span></div>
+                        <div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full" style="background:var(--node-guest)"></span><span class="text-secondary">Guest</span></div>
+                    </div>
+                </div>
+
+                <div class="flex-1 w-full h-full cursor-crosshair relative" id="d3-container" style="background: var(--graph-bg);"></div>
+                <div id="node-detail" class="hidden absolute bottom-3 left-3 card rounded-lg p-3 z-20 max-w-xs"></div>
+            </div>
+
+            <div class="flex flex-col gap-5 h-full overflow-hidden">
+                <div class="card rounded-xl flex flex-col flex-1 overflow-hidden">
+                    <div class="px-4 py-2.5 border-b border-default">
+                        <span class="text-[12px] font-medium flex items-center gap-2" style="color:var(--risk-high)">
+                            <span class="material-symbols-outlined text-[18px]">gpp_bad</span>
+                            Active anomalies
+                        </span>
+                    </div>
+                    <div class="p-3.5 space-y-3 overflow-y-auto flex-1" id="alerts-container"></div>
+                </div>
+
+                <div class="card rounded-xl flex flex-col flex-1 overflow-hidden">
+                    <div class="px-4 py-2.5 border-b border-default">
+                        <span class="text-[12px] font-medium flex items-center gap-2" style="color:var(--accent)">
+                            <span class="material-symbols-outlined text-[18px]">policy</span>
+                            Auto-generated policies
+                        </span>
+                    </div>
+                    <div class="p-3.5 space-y-3 overflow-y-auto flex-1" id="policies-container"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex-1 overflow-y-auto p-5 space-y-5 view-panel hidden" id="view-alerts">
+        <h2 class="text-lg font-semibold text-primary mb-2">All risk alerts</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="alerts-view-container"></div>
+    </div>
+
+    <div class="flex-1 overflow-y-auto p-5 space-y-5 view-panel hidden" id="view-policies">
+        <h2 class="text-lg font-semibold text-primary mb-2">All suggested policies</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="policies-view-container"></div>
+    </div>
+
+    <div class="flex-1 overflow-y-auto p-5 space-y-5 view-panel hidden" id="view-history">
+        <div class="flex items-center justify-between mb-2">
+            <h2 class="text-lg font-semibold text-primary">History &amp; trends</h2>
+            <select id="history-range-select" class="rounded-lg px-2.5 py-1.5 text-xs font-mono" style="background:var(--surface); border:1px solid var(--border); color:var(--text-primary);">
+                <option value="30">Last 30 min</option>
+                <option value="60" selected>Last 1 hour</option>
+                <option value="360">Last 6 hours</option>
+                <option value="1440">Last 24 hours</option>
+            </select>
+        </div>
+
+        <div class="card rounded-xl overflow-hidden">
+            <div class="px-4 py-2.5 border-b border-default flex items-center justify-between">
+                <span class="text-[12px] font-medium text-primary flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[18px]" style="color:var(--accent)">monitoring</span>
+                    Connections &amp; alerts over time
+                </span>
+                <div class="flex gap-4 font-mono text-[11px]">
+                    <div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full" style="background:var(--accent)"></span><span class="text-secondary">Connections</span></div>
+                    <div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full" style="background:var(--risk-high)"></span><span class="text-secondary">Alerts</span></div>
+                </div>
+            </div>
+            <div id="history-chart-container" class="w-full" style="height: 280px; background: var(--graph-bg);"></div>
+        </div>
+
+        <div class="card rounded-xl overflow-hidden">
+            <div class="px-4 py-2.5 border-b border-default">
+                <span class="text-[12px] font-medium text-primary flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[18px]" style="color:var(--risk-high)">gpp_bad</span>
+                    Recurring alert patterns
+                </span>
+            </div>
+            <div id="history-alerts-container"></div>
+        </div>
+
+        <div class="card rounded-xl overflow-hidden">
+            <div class="px-4 py-2.5 border-b border-default flex items-center justify-between">
+                <span class="text-[12px] font-medium text-primary flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[18px]" style="color:var(--accent)">link</span>
+                    On-chain audit trail
+                </span>
+                <div class="flex items-center gap-2">
+                    <button id="audit-verify-btn" class="px-2.5 py-1.5 rounded-lg border border-default text-[11px] font-mono transition-colors" style="color:var(--text-secondary);">
+                        Verify current state
+                    </button>
+                    <button id="audit-anchor-btn" class="px-2.5 py-1.5 rounded-lg text-[11px] font-mono transition-colors" style="background:var(--accent-soft); color:var(--accent); border:1px solid var(--accent-border);">
+                        Anchor now
+                    </button>
+                </div>
+            </div>
+            <div id="audit-network-info" class="px-4 py-2 text-[10px] font-mono text-muted border-b border-default"></div>
+            <div id="audit-verify-result" class="hidden px-4 py-2.5 text-[11px] font-mono border-b border-default"></div>
+            <div id="audit-history-container"></div>
+        </div>
+    </div>
+
+    <div class="flex-1 overflow-y-auto p-5 space-y-5 view-panel hidden" id="view-settings">
+        <h2 class="text-lg font-semibold text-primary mb-4">Settings</h2>
+        <div class="card rounded-xl p-5 max-w-lg">
+            <label class="block text-xs font-mono text-muted mb-2">Backend API URL</label>
+            <input id="api-base-input" type="text" class="w-full rounded px-3 py-2 text-xs font-mono mb-4" value="http://localhost:5000" />
+            <button id="save-settings-btn" class="px-4 py-2 rounded text-xs font-medium transition-colors" style="background:var(--accent-soft); color:var(--accent); border:1px solid var(--accent-border);">
+                Save &amp; reconnect
+            </button>
+        </div>
+    </div>
+
+</main>
+
+<script>
+    let API_BASE = "http://localhost:5000";
+    let simulation, svg, g, zoom, tooltip;
+    let lastData = null;
+    let nodePositions = {};   // ip -> {x, y} — persisted across auto-refreshes so the live topology doesn't jump around every cycle
+    let isLoadingDashboard = false;
+    let autoRefreshTimer = null;
+
+    /* ============ THEME ============ */
+    function applyTheme(theme) {
+        document.documentElement.setAttribute('data-theme', theme);
+        document.querySelectorAll('#theme-toggle button').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.themeChoice === theme);
+        });
+    }
+    document.getElementById('theme-toggle').addEventListener('click', (e) => {
+        const btn = e.target.closest('button[data-theme-choice]');
+        if (!btn) return;
+        applyTheme(btn.dataset.themeChoice);
+    });
+
+    /* ============ EMPTY STATES ============ */
+    function emptyStateHTML(message, showCommand = true) {
+        return `
+            <div class="empty-state">
+                <span class="material-symbols-outlined">cloud_off</span>
+                <p class="text-[13px] text-secondary max-w-[220px]">${message}</p>
+                ${showCommand ? `<code>python3 backend_server.py</code>` : ''}
+            </div>`;
+    }
+
+    function radiusForSegment(segment) {
+        if (segment === "server") return 15;
+        if (segment === "employee") return 10;
+        return 8;
+    }
+
+    function buildDemoGraphData() {
+        const segments = [
+            { group: 'employee', count: 7, prefix: '192.168.10.', types: ['Laptop', 'Workstation', 'Developer Laptop'] },
+            { group: 'server', count: 5, prefix: '10.0.0.', types: ['Web Server', 'DB Server', 'Auth Server', 'File Server', 'API Gateway'] },
+            { group: 'iot', count: 5, prefix: '172.16.0.', types: ['IP Camera', 'Smart Printer', 'Badge Reader', 'HVAC Controller', 'Smart TV'] },
+            { group: 'guest', count: 4, prefix: '192.168.50.', types: ['Guest Device', 'Visitor Laptop', 'Personal Phone', 'Contractor Tablet'] },
+        ];
+
+        const nodes = [];
+        segments.forEach(seg => {
+            for (let i = 0; i < seg.count; i++) {
+                nodes.push({
+                    id: `${seg.prefix}${10 + i}`,
+                    group: seg.group,
+                    type: seg.types[i % seg.types.length],
+                    radius: radiusForSegment(seg.group)
+                });
+            }
+        });
+
+        const byGroup = g => nodes.filter(n => n.group === g).map(n => n.id);
+        const employees = byGroup('employee');
+        const servers = byGroup('server');
+        const iots = byGroup('iot');
+        const guests = byGroup('guest');
+
+        const links = [];
+        // normal traffic: every workstation/laptop talks to one or two app servers
+        employees.forEach((emp, i) => {
+            links.push({ source: emp, target: servers[i % servers.length], riskLevel: null, alertType: null });
+            if (i % 2 === 0) links.push({ source: emp, target: servers[(i + 2) % servers.length], riskLevel: null, alertType: null });
+        });
+        // IoT devices only need one designated service each
+        iots.forEach((d, i) => {
+            links.push({ source: d, target: servers[i % 2], riskLevel: null, alertType: null });
+        });
+        // guest wifi normally only reaches the gateway
+        guests.forEach(gst => {
+            links.push({ source: gst, target: servers[servers.length - 1], riskLevel: null, alertType: null });
+        });
+        // servers mesh with each other (internal service calls)
+        for (let i = 0; i < servers.length - 1; i++) {
+            links.push({ source: servers[i], target: servers[i + 1], riskLevel: null, alertType: null });
+        }
+        // planted risky paths, for the segmentation story to read clearly
+        links.push({ source: guests[0], target: servers[1], riskLevel: 'HIGH', alertType: 'CROSS_SEGMENT_ACCESS' });
+        links.push({ source: iots[1], target: servers[2], riskLevel: 'HIGH', alertType: 'UNEXPECTED_SERVICE_ACCESS' });
+        links.push({ source: employees[4], target: servers[3], riskLevel: 'MEDIUM', alertType: 'FAN_OUT_LATERAL_MOVEMENT' });
+        links.push({ source: guests[2], target: servers[0], riskLevel: 'MEDIUM', alertType: 'CROSS_SEGMENT_ACCESS' });
+
+        return { nodes, links };
+    }
+
+    function buildGraphData(devices, connections, alerts) {
+        const alertByConnId = {};
+        alerts.forEach(a => { alertByConnId[a.conn_id] = a; });
+
+        const processesByIp = {};
+        connections.forEach(c => {
+            if (!c.process_name) return;
+            if (!processesByIp[c.src_ip]) processesByIp[c.src_ip] = new Set();
+            processesByIp[c.src_ip].add(c.process_name);
+        });
+
+        const nodes = devices.map(d => ({
+            id: d.ip,
+            group: d.segment,
+            type: d.device_type,
+            radius: radiusForSegment(d.segment),
+            processes: processesByIp[d.ip] ? Array.from(processesByIp[d.ip]) : []
+        }));
+
+        const nodeIds = new Set(nodes.map(n => n.id));
+
+        const links = connections
+            .filter(c => nodeIds.has(c.src_ip) && nodeIds.has(c.dst_ip))
+            .map(c => {
+                const alert = alertByConnId[c.conn_id];
+                return {
+                    source: c.src_ip,
+                    target: c.dst_ip,
+                    value: 1,
+                    riskLevel: alert ? alert.risk_level : null,
+                    alertType: alert ? alert.risk_type : null
+                };
+            });
+
+        return { nodes, links };
+    }
+
+    function computeDegrees(nodes, links) {
+        const degree = {};
+        nodes.forEach(n => { degree[n.id] = 0; });
+        links.forEach(l => {
+            const s = typeof l.source === 'object' ? l.source.id : l.source;
+            const t = typeof l.target === 'object' ? l.target.id : l.target;
+            if (degree[s] !== undefined) degree[s]++;
+            if (degree[t] !== undefined) degree[t]++;
+        });
+        return degree;
+    }
+
+    // Real laptops fan out to dozens of individual remote IPs (one connection
+    // each) — a free-form force layout crams all of them together with every
+    // label fighting for space. Detect that specific "one hub, many single-
+    // connection spokes" shape so it can be drawn as a clean ring instead of
+    // letting physics fight over an unreadable hairball.
+    function detectHubAndSpoke(nodes, links) {
+        if (nodes.length < 10) return null;
+        const degree = computeDegrees(nodes, links);
+        let hub = null, maxDeg = 0;
+        nodes.forEach(n => { if (degree[n.id] > maxDeg) { maxDeg = degree[n.id]; hub = n.id; } });
+        if (!hub) return null;
+        const others = nodes.filter(n => n.id !== hub);
+        const leafCount = others.filter(n => degree[n.id] <= 1).length;
+        // Live laptop traffic is naturally a noisy hub-and-spoke graph. Keep
+        // larger live graphs in a deterministic radial layout even when a few
+        // local connections make the leaf ratio slightly lower.
+        return (leafCount / others.length) >= 0.7 || nodes.length >= 20 ? hub : null;
+    }
+
+    function renderGraph(graphData, options = {}) {
+        const isDemo = !!options.demo;
+        const container = document.getElementById('d3-container');
+        container.innerHTML = "";
+
+        if (!graphData.nodes.length) {
+            container.innerHTML = emptyStateHTML("No live network data yet. Start the backend to see your topology here.");
+            return;
+        }
+
+        const width = container.clientWidth || 800;
+        const height = container.clientHeight || 500;
+
+        svg = d3.select("#d3-container")
+            .append("svg")
+            .attr("width", "100%")
+            .attr("height", "100%")
+            .attr("viewBox", [0, 0, width, height]);
+
+        g = svg.append("g");
+
+        zoom = d3.zoom()
+            .scaleExtent([0.5, 4])
+            .on("zoom", (event) => g.attr("transform", event.transform));
+        svg.call(zoom);
+
+        const hubId = isDemo ? null : detectHubAndSpoke(graphData.nodes, graphData.links);
+        const useRadialLayout = isDemo || !!hubId;
+
+        if (isDemo) {
+            const badge = document.createElement('div');
+            badge.className = 'absolute top-3 left-3 badge badge-neutral';
+            badge.style.zIndex = '5';
+            badge.innerHTML = `<span class="material-symbols-outlined text-[12px]">visibility</span>&nbsp;Demo preview — connect the backend for live data`;
+            container.appendChild(badge);
+        } else if (hubId) {
+            const badge = document.createElement('div');
+            badge.className = 'absolute top-3 left-3 badge badge-neutral';
+            badge.style.zIndex = '5';
+            badge.textContent = `${graphData.nodes.length} destinations — arranged around ${hubId} for readability`;
+            container.appendChild(badge);
+        } else {
+            // seed from last known positions so periodic auto-refresh settles
+            // gently instead of the whole graph jumping to a fresh random layout
+            graphData.nodes.forEach(n => {
+                const prev = nodePositions[n.id];
+                if (prev) { n.x = prev.x; n.y = prev.y; }
+            });
+        }
+
+        simulation = d3.forceSimulation(graphData.nodes)
+            .force("link", d3.forceLink(graphData.links).id(d => d.id).distance(isDemo ? 60 : 100).strength(isDemo ? 0.03 : 1))
+            .force("charge", d3.forceManyBody().strength(isDemo ? -10 : -150))
+            .force("center", d3.forceCenter(width / 2, height / 2))
+            .force("collide", d3.forceCollide().radius(d => d.radius + (isDemo ? 4 : 14)));
+
+        if (isDemo) {
+            const ringRadius = Math.max(120, Math.min(width, height) / 2 - 70);
+            // seed nodes evenly around the ring so it reads as a circle from the first frame
+            graphData.nodes.forEach((n, i) => {
+                const angle = (i / graphData.nodes.length) * 2 * Math.PI;
+                n.x = width / 2 + ringRadius * Math.cos(angle);
+                n.y = height / 2 + ringRadius * Math.sin(angle);
+                n.fx = n.x;
+                n.fy = n.y;
+            });
+            // positions are fixed (fx/fy) so the ring stays perfectly clean; links still
+            // draw as crossing chords between them for that "complex network" read
+        } else if (hubId) {
+            const spokes = graphData.nodes.filter(n => n.id !== hubId);
+            const ringRadius = Math.max(100, Math.min(width / 2 - 50, height / 2 - 50));
+            graphData.nodes.forEach(n => {
+                if (n.id === hubId) {
+                    n.x = width / 2; n.y = height / 2;
+                } else {
+                    const i = spokes.indexOf(n);
+                    const angle = (i / spokes.length) * 2 * Math.PI;
+                    n.x = width / 2 + ringRadius * Math.cos(angle);
+                    n.y = height / 2 + ringRadius * Math.sin(angle);
+                }
+                n.fx = n.x;
+                n.fy = n.y;
+            });
+        }
+
+        if (!tooltip) {
+            tooltip = d3.select("body").append("div").attr("class", "d3-tooltip").style("opacity", 0);
+        }
+
+        const link = g.append("g")
+            .selectAll("line")
+            .data(graphData.links)
+            .enter().append("line")
+            .attr("class", d => {
+                if (d.riskLevel === "HIGH") return "link risky-high";
+                if (d.riskLevel === "MEDIUM") return "link risky-medium";
+                return "link";
+            })
+            .on("mouseover", function(event, d) {
+                if (!d.riskLevel) return;
+                tooltip.transition().duration(150).style("opacity", 1);
+                tooltip.html(`<strong style="color:${d.riskLevel === 'HIGH' ? 'var(--risk-high)' : 'var(--risk-medium)'}">${d.alertType || 'Risk detected'}</strong>`)
+                    .style("left", (event.pageX + 15) + "px")
+                    .style("top", (event.pageY - 20) + "px");
+            })
+            .on("mouseout", () => tooltip.transition().duration(200).style("opacity", 0));
+
+        const node = g.append("g")
+            .selectAll("g")
+            .data(graphData.nodes)
+            .enter().append("g")
+            .attr("class", d => `node ${d.group}`)
+            .call(d3.drag()
+                .on("start", dragstarted)
+                .on("drag", dragged)
+                .on("end", dragended))
+            .on("mouseover", function(event, d) {
+                tooltip.transition().duration(150).style("opacity", 1);
+                const procLine = d.processes && d.processes.length
+                    ? `<div class="text-xs mt-1 pt-1" style="border-top:1px solid var(--border)"><strong>Processes:</strong> ${d.processes.slice(0, 3).join(', ')}${d.processes.length > 3 ? '…' : ''}</div>`
+                    : '';
+                tooltip.html(`
+                    <div class="mb-1 pb-1" style="border-bottom:1px solid var(--border)"><strong>IP:</strong> <span style="color:var(--accent)">${d.id}</span></div>
+                    <div class="text-xs"><strong>Device:</strong> ${d.type}</div>
+                    <div class="text-xs"><strong>Segment:</strong> ${d.group}</div>
+                    ${procLine}
+                `)
+                .style("left", (event.pageX + 15) + "px")
+                .style("top", (event.pageY - 28) + "px");
+            })
+            .on("mouseout", function() {
+                tooltip.transition().duration(200).style("opacity", 0);
+            })
+            .on("click", function(event, d) {
+                const detail = document.getElementById('node-detail');
+                detail.classList.remove('hidden');
+                const procList = d.processes && d.processes.length
+                    ? `<p><span class="text-muted">Processes seen:</span> ${d.processes.join(', ')}</p>`
+                    : `<p class="text-muted">No process attribution available for this IP.</p>`;
+                detail.innerHTML = `
+                    <div class="flex justify-between items-center mb-2 pb-1" style="border-bottom:1px solid var(--border)">
+                        <span class="text-xs font-semibold font-mono" style="color:var(--accent)">${d.id}</span>
+                        <button onclick="document.getElementById('node-detail').classList.add('hidden')" class="text-muted hover:text-primary">
+                            <span class="material-symbols-outlined text-[14px]">close</span>
+                        </button>
+                    </div>
+                    <div class="space-y-1 text-xs font-mono text-secondary">
+                        <p><span class="text-muted">Device:</span> ${d.type}</p>
+                        <p><span class="text-muted">Segment:</span> ${d.group}</p>
+                        ${procList}
+                    </div>
+                `;
+            });
+
+        const riskyNodeIds = new Set();
+        graphData.links.forEach(l => {
+            if (!l.riskLevel) return;
+            const s = typeof l.source === 'object' ? l.source.id : l.source;
+            const t = typeof l.target === 'object' ? l.target.id : l.target;
+            riskyNodeIds.add(s);
+            riskyNodeIds.add(t);
+        });
+        const showAllLabels = graphData.nodes.length <= 15;
+
+        node.append("circle").attr("r", d => d.radius);
+        node.append("text").attr("dx", 12).attr("dy", ".35em")
+            .text(d => (showAllLabels || d.id === hubId || riskyNodeIds.has(d.id)) ? d.id : "");
+
+        function drawPositions() {
+            link.attr("x1", d => d.source.x).attr("y1", d => d.source.y)
+                .attr("x2", d => d.target.x).attr("y2", d => d.target.y);
+            node.attr("transform", d => `translate(${d.x},${d.y})`);
+            if (!isDemo) {
+                graphData.nodes.forEach(n => { nodePositions[n.id] = { x: n.x, y: n.y }; });
+            }
+        }
+
+        simulation.on("tick", drawPositions);
+
+        if (useRadialLayout) {
+            // positions are static (fx/fy pinned) — draw once immediately rather
+            // than waiting on the simulation's own timer, and stop it since
+            // nothing will move anyway. simulation.tick() alone does NOT fire
+            // the 'tick' listener above, so drawPositions() must be called directly.
+            simulation.alpha(0).stop();
+            drawPositions();
+        }
+
+        function dragstarted(event, d) {
+            if (!event.active) simulation.alphaTarget(0.3).restart();
+            d.fx = d.x; d.fy = d.y;
+        }
+        function dragged(event, d) { d.fx = event.x; d.fy = event.y; }
+        function dragended(event, d) {
+            if (!event.active) simulation.alphaTarget(0);
+            d.fx = null; d.fy = null;
+        }
+    }
+
+    function renderAlerts(alerts, containerId = 'alerts-container') {
+        const el = document.getElementById(containerId);
+        if (!el) return;
+        if (!alerts || alerts.length === 0) {
+            el.innerHTML = emptyStateHTML("No alerts yet. Connect the backend to view live risk detections.", containerId === 'alerts-container');
+            return;
+        }
+
+        el.innerHTML = alerts.map(a => {
+            const isHigh = a.risk_level === "HIGH";
+            const badgeClass = isHigh ? "badge-high" : "badge-medium";
+            const confidencePct = Math.round((a.confidence_score || 0) * 100);
+            const barColor = isHigh ? "var(--risk-high)" : "var(--risk-medium)";
+            const searchBlob = `${a.risk_type} ${a.src_ip || ''} ${a.dst_ip || ''} ${a.src_process || ''}`.toLowerCase();
+            const processTag = a.src_process
+                ? `<span class="badge badge-neutral" title="Process that owned the source socket">${a.src_process}</span>`
+                : '';
+
+            return `
+            <div class="alert-card card rounded-lg p-3 relative overflow-hidden" data-search="${searchBlob}">
+                <div class="flex items-center justify-between mb-1.5">
+                    <span class="font-mono text-[11px] font-semibold text-primary">${a.risk_type.replace(/_/g, ' ')}</span>
+                    <span class="badge ${badgeClass}">${a.risk_level}</span>
+                </div>
+                <div class="space-y-1 text-xs font-mono text-secondary">
+                    <div class="flex justify-between text-[10px] text-muted">
+                        <span>Confidence</span><span>${confidencePct}%</span>
+                    </div>
+                    <div class="w-full h-1 rounded overflow-hidden" style="background:var(--border-soft)">
+                        <div class="h-full" style="width:${confidencePct}%; background:${barColor}"></div>
+                    </div>
+                    <p class="mt-1.5 text-[11px] text-secondary font-mono">${a.src_ip || '?'} &rarr; ${a.dst_ip || 'target'}</p>
+                    ${processTag ? `<div class="pt-0.5">${processTag}</div>` : ''}
+                </div>
+            </div>`;
+        }).join("");
+    }
+
+    function renderPolicies(policies, containerId = 'policies-container') {
+        const el = document.getElementById(containerId);
+        if (!el) return;
+        if (!policies || policies.length === 0) {
+            el.innerHTML = emptyStateHTML("No policies generated yet.", false);
+            return;
+        }
+
+        el.innerHTML = policies.map((p) => `
+            <div class="card rounded-lg p-3 space-y-1.5">
+                <div class="flex items-center justify-between">
+                    <span class="font-mono text-[11px] font-semibold text-primary flex items-center gap-1">
+                        <span class="material-symbols-outlined text-[14px]" style="color:var(--accent)">shield</span>${p.action}
+                    </span>
+                    <span class="badge badge-ready">Ready</span>
+                </div>
+                <div class="p-2 rounded font-mono text-[11px] text-secondary overflow-x-auto" style="background:var(--bg); border:1px solid var(--border)">
+                    <code>${(p.iptables_rule || "").replace(/\\n/g, "<br>")}</code>
+                </div>
+                <button class="copy-btn w-full py-1 rounded text-[11px] font-mono transition-colors flex items-center justify-center gap-1" style="background:var(--accent-soft); color:var(--accent); border:1px solid var(--accent-border)" data-rule="${(p.iptables_rule || "").replace(/"/g, '&quot;')}">
+                    <span class="material-symbols-outlined text-[14px]">content_copy</span>Copy rule
+                </button>
+            </div>
+        `).join("");
+
+        el.querySelectorAll(".copy-btn").forEach(btn => {
+            btn.addEventListener("click", () => {
+                navigator.clipboard.writeText(btn.dataset.rule).then(() => {
+                    btn.classList.add("copied");
+                    const orig = btn.innerHTML;
+                    btn.innerHTML = `<span class="material-symbols-outlined text-[14px]">check</span>Copied`;
+                    setTimeout(() => {
+                        btn.innerHTML = orig;
+                        btn.classList.remove("copied");
+                    }, 1500);
+                });
+            });
+        });
+    }
+
+    function renderMetrics(metrics) {
+        document.getElementById('metric-devices').textContent = metrics?.total_devices ?? '0';
+        document.getElementById('metric-connections').textContent = metrics?.total_connections ?? '0';
+        document.getElementById('metric-alerts').textContent = metrics?.total_alerts ?? '0';
+        document.getElementById('metric-policies').textContent = metrics?.total_policies ?? '0';
+
+        document.getElementById('nav-alerts-badge').textContent = metrics?.total_alerts ?? '0';
+        document.getElementById('nav-policies-badge').textContent = metrics?.total_policies ?? '0';
+    }
+
+    function renderNotifications(notifications) {
+        const badge = document.getElementById('notif-badge');
+        const list = document.getElementById('notif-list');
+        if (!notifications || notifications.length === 0) {
+            badge.classList.add('hidden');
+            list.innerHTML = `<p class="text-xs font-mono text-muted p-2">No active incidents.</p>`;
+            return;
+        }
+        badge.textContent = notifications.length;
+        badge.classList.remove('hidden');
+
+        list.innerHTML = notifications.slice(0, 6).map(n => `
+            <div class="text-xs pl-2.5 py-1.5 rounded-r-lg" style="border-left: 2px solid ${n.severity === 'HIGH' ? 'var(--risk-high)' : 'var(--risk-medium)'}; background: var(--bg);">
+                <div class="flex items-center justify-between mb-1 font-mono">
+                    <span class="font-semibold" style="color: ${n.severity === 'HIGH' ? 'var(--risk-high)' : 'var(--risk-medium)'}">${n.severity}</span>
+                    <span class="text-[9px] text-muted">Score: ${n.priority_score}</span>
+                </div>
+                <p class="text-primary text-xs">${n.summary}</p>
+            </div>
+        `).join("");
+    }
+
+    async function loadHistoryData() {
+        const minutes = parseInt(document.getElementById('history-range-select').value, 10);
+        try {
+            const [metricsRes, alertsRes] = await Promise.all([
+                fetch(`${API_BASE}/api/history/metrics?minutes=${minutes}`, { signal: AbortSignal.timeout(3000) }),
+                fetch(`${API_BASE}/api/history/alerts?limit=50`, { signal: AbortSignal.timeout(3000) })
+            ]);
+            const metrics = metricsRes.ok ? await metricsRes.json() : [];
+            const alerts = alertsRes.ok ? await alertsRes.json() : [];
+            renderHistoryChart(metrics);
+            renderHistoryAlerts(alerts);
+        } catch (e) {
+            renderHistoryChart([]);
+            renderHistoryAlerts([]);
+        }
+        loadAuditData();
+    }
+
+    async function loadAuditData() {
+        const infoEl = document.getElementById('audit-network-info');
+        try {
+            const statusRes = await fetch(`${API_BASE}/api/audit/status`, { signal: AbortSignal.timeout(3000) });
+            const status = await statusRes.json();
+            const anchorBtn = document.getElementById('audit-anchor-btn');
+            const verifyBtn = document.getElementById('audit-verify-btn');
+
+            if (!status.available) {
+                infoEl.innerHTML = `<span style="color:var(--risk-medium)">Not available — ${status.error || 'web3 not configured'}</span>`;
+                anchorBtn.disabled = true;
+                verifyBtn.disabled = true;
+                anchorBtn.style.opacity = verifyBtn.style.opacity = '0.5';
+                document.getElementById('audit-history-container').innerHTML = '';
+                return;
+            }
+
+            anchorBtn.disabled = false;
+            verifyBtn.disabled = false;
+            anchorBtn.style.opacity = verifyBtn.style.opacity = '1';
+
+            const shortAddr = a => a ? `${a.slice(0, 6)}…${a.slice(-4)}` : '?';
+            infoEl.innerHTML = `${status.network_label} &middot; contract ${shortAddr(status.contract_address)} &middot; account ${shortAddr(status.account_address)}`;
+        } catch (e) {
+            infoEl.textContent = 'Could not reach the backend to check audit status.';
+        }
+
+        try {
+            const histRes = await fetch(`${API_BASE}/api/audit/history?limit=20`, { signal: AbortSignal.timeout(3000) });
+            const rows = histRes.ok ? await histRes.json() : [];
+            renderAuditHistory(rows);
+        } catch (e) {
+            renderAuditHistory([]);
+        }
+    }
+
+    function renderAuditHistory(rows) {
+        const el = document.getElementById('audit-history-container');
+        if (!rows || rows.length === 0) {
+            el.innerHTML = emptyStateHTML('No anchors yet — click "Anchor now" to write the current alerts/policies history hash on-chain.', false);
+            return;
+        }
+        const shortHash = h => h ? `${h.slice(0, 10)}…${h.slice(-6)}` : '?';
+        el.innerHTML = rows.map(r => `
+            <div class="px-4 py-2.5 flex items-center justify-between border-b border-default">
+                <div class="min-w-0">
+                    <p class="font-mono text-[11px] text-primary">${r.label || 'anchor'}</p>
+                    <p class="font-mono text-[10px] text-muted truncate">hash ${shortHash(r.content_hash)} &middot; tx ${shortHash(r.tx_hash)} &middot; block ${r.block_number}</p>
+                </div>
+                <span class="text-[10px] font-mono text-muted shrink-0 pl-3">${new Date(r.created_at).toLocaleTimeString()}</span>
+            </div>
+        `).join("");
+    }
+
+    async function handleAnchorNow() {
+        const btn = document.getElementById('audit-anchor-btn');
+        const original = btn.textContent;
+        btn.textContent = 'Anchoring…';
+        btn.disabled = true;
+        try {
+            const res = await fetch(`${API_BASE}/api/audit/anchor`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({}),
+                signal: AbortSignal.timeout(30000)
+            });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.error || `HTTP ${res.status}`);
+            }
+            await loadAuditData();
+        } catch (e) {
+            const infoEl = document.getElementById('audit-network-info');
+            infoEl.innerHTML = `<span style="color:var(--risk-high)">Anchor failed: ${e.message}</span>`;
+        } finally {
+            btn.textContent = original;
+            btn.disabled = false;
+        }
+    }
+
+    async function handleVerifyCurrentState() {
+        const resultEl = document.getElementById('audit-verify-result');
+        resultEl.classList.remove('hidden');
+        resultEl.textContent = 'Checking…';
+        resultEl.style.color = 'var(--text-secondary)';
+        try {
+            const res = await fetch(`${API_BASE}/api/audit/verify`, { signal: AbortSignal.timeout(5000) });
+            const data = await res.json();
+            if (data.found) {
+                resultEl.style.color = 'var(--success)';
+                resultEl.textContent = `✓ Current history matches an on-chain anchor (id ${data.record.anchor_id}, "${data.record.label}") — nothing has changed since.`;
+            } else {
+                resultEl.style.color = 'var(--risk-medium)';
+                resultEl.textContent = `Current history doesn't match any anchor — either nothing's been anchored yet, or something changed since the last anchor.`;
+            }
+        } catch (e) {
+            resultEl.style.color = 'var(--risk-high)';
+            resultEl.textContent = `Verify failed: ${e.message}`;
+        }
+    }
+
+    function renderHistoryChart(rows) {
+        const container = document.getElementById('history-chart-container');
+        container.innerHTML = "";
+
+        if (!rows || rows.length < 2) {
+            container.innerHTML = emptyStateHTML(
+                "Not enough history yet — leave the backend running a little longer to build a trend.", false
+            );
+            return;
+        }
+
+        const width = container.clientWidth || 800;
+        const height = container.clientHeight || 280;
+        const margin = { top: 16, right: 46, bottom: 28, left: 46 };
+
+        const parsed = rows.map(r => ({ t: new Date(r.timestamp), conn: r.connection_count, alerts: r.alert_count }));
+
+        const svg = d3.select("#history-chart-container").append("svg")
+            .attr("width", "100%").attr("height", "100%")
+            .attr("viewBox", [0, 0, width, height]);
+
+        const x = d3.scaleTime()
+            .domain(d3.extent(parsed, d => d.t))
+            .range([margin.left, width - margin.right]);
+        const yConn = d3.scaleLinear()
+            .domain([0, d3.max(parsed, d => d.conn) || 1]).nice()
+            .range([height - margin.bottom, margin.top]);
+        const yAlerts = d3.scaleLinear()
+            .domain([0, Math.max(1, d3.max(parsed, d => d.alerts) || 1)]).nice()
+            .range([height - margin.bottom, margin.top]);
+
+        // gridlines
+        svg.append("g")
+            .attr("transform", `translate(0,${height - margin.bottom})`)
+            .call(d3.axisBottom(x).ticks(5).tickSize(0))
+            .call(g => g.select(".domain").attr("stroke", "var(--border)"))
+            .selectAll("text").attr("fill", "var(--text-muted)").attr("font-family", "IBM Plex Mono").attr("font-size", "10px");
+
+        svg.append("g")
+            .attr("transform", `translate(${margin.left},0)`)
+            .call(d3.axisLeft(yConn).ticks(4).tickSize(-(width - margin.left - margin.right)))
+            .call(g => g.select(".domain").remove())
+            .call(g => g.selectAll(".tick line").attr("stroke", "var(--border-soft)"))
+            .selectAll("text").attr("fill", "var(--accent)").attr("font-family", "IBM Plex Mono").attr("font-size", "10px");
+
+        svg.append("g")
+            .attr("transform", `translate(${width - margin.right},0)`)
+            .call(d3.axisRight(yAlerts).ticks(4).tickSize(0))
+            .call(g => g.select(".domain").attr("stroke", "var(--border)"))
+            .selectAll("text").attr("fill", "var(--risk-high)").attr("font-family", "IBM Plex Mono").attr("font-size", "10px");
+
+        const connLine = d3.line().x(d => x(d.t)).y(d => yConn(d.conn)).curve(d3.curveMonotoneX);
+        const alertLine = d3.line().x(d => x(d.t)).y(d => yAlerts(d.alerts)).curve(d3.curveMonotoneX);
+
+        svg.append("path").datum(parsed).attr("fill", "none")
+            .attr("stroke", "var(--accent)").attr("stroke-width", 2).attr("d", connLine);
+        svg.append("path").datum(parsed).attr("fill", "none")
+            .attr("stroke", "var(--risk-high)").attr("stroke-width", 2).attr("d", alertLine);
+    }
+
+    function renderHistoryAlerts(rows) {
+        const el = document.getElementById('history-alerts-container');
+        if (!rows || rows.length === 0) {
+            el.innerHTML = emptyStateHTML("No recurring alert patterns recorded yet.", false);
+            return;
+        }
+
+        function timeAgo(iso) {
+            const secs = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 1000));
+            if (secs < 60) return `${secs}s ago`;
+            if (secs < 3600) return `${Math.round(secs / 60)}m ago`;
+            return `${Math.round(secs / 3600)}h ago`;
+        }
+
+        el.innerHTML = rows.map(r => {
+            const badgeClass = r.risk_level === "HIGH" ? "badge-high" : "badge-medium";
+            return `
+            <div class="px-4 py-3 flex items-center justify-between border-b border-default">
+                <div class="min-w-0">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="font-mono text-[11px] font-semibold text-primary">${(r.risk_type || '').replace(/_/g, ' ')}</span>
+                        <span class="badge ${badgeClass}">${r.risk_level || ''}</span>
+                        ${r.latest_process ? `<span class="badge badge-neutral">${r.latest_process}</span>` : ''}
+                    </div>
+                    <p class="text-[11px] font-mono text-secondary truncate">${r.src_ip || '?'} &rarr; ${r.dst_ip || 'target'}</p>
+                </div>
+                <div class="text-right shrink-0 pl-3">
+                    <p class="text-[11px] font-mono text-primary">${r.occurrence_count}&times; seen</p>
+                    <p class="text-[10px] font-mono text-muted">last ${timeAgo(r.last_seen)}</p>
+                </div>
+            </div>`;
+        }).join("");
+    }
+
+    let currentView = 'dashboard';
+
+    function switchView(viewName) {
+        currentView = viewName;
+        document.querySelectorAll('.view-panel').forEach(v => v.classList.add('hidden'));
+        const target = document.getElementById(`view-${viewName}`);
+        if (target) target.classList.remove('hidden');
+
+        document.querySelectorAll('.nav-link').forEach(l => l.classList.toggle('active', l.dataset.view === viewName));
+
+        if (lastData) {
+            if (viewName === 'alerts') renderAlerts(lastData.alerts, 'alerts-view-container');
+            if (viewName === 'policies') renderPolicies(lastData.policies, 'policies-view-container');
+        }
+        if (viewName === 'history') loadHistoryData();
+    }
+
+    function setDisconnectedState() {
+        const statusText = document.getElementById('status-text');
+        const statusDot = document.getElementById('status-dot');
+
+        statusText.textContent = "Backend not connected";
+        statusDot.style.background = "var(--risk-medium)";
+
+        lastData = { devices: [], connections: [], alerts: [], policies: [], notifications: [], metrics: {} };
+        renderMetrics({});
+        renderAlerts([], 'alerts-container');
+        renderAlerts([], 'alerts-view-container');
+        renderPolicies([], 'policies-container');
+        renderPolicies([], 'policies-view-container');
+        renderNotifications([]);
+        renderGraph({ nodes: [], links: [] });
+    }
+
+    async function loadDashboard(silent = false) {
+        if (isLoadingDashboard) return;  // don't stack overlapping requests if one is slow
+        isLoadingDashboard = true;
+
+        const statusText = document.getElementById('status-text');
+        const statusDot = document.getElementById('status-dot');
+
+        if (!silent) {
+            statusText.textContent = "Connecting to backend…";
+            statusDot.style.background = "var(--text-muted)";
+        }
+
+        try {
+            const summaryRes = await fetch(`${API_BASE}/api/summary`, { signal: AbortSignal.timeout(2500) });
+            if (summaryRes.ok) {
+                const data = await summaryRes.json();
+                lastData = data;
+
+                renderMetrics(data.metrics);
+                renderAlerts(data.alerts, 'alerts-container');
+                renderAlerts(data.alerts, 'alerts-view-container');
+                renderPolicies(data.policies, 'policies-container');
+                renderPolicies(data.policies, 'policies-view-container');
+                renderNotifications(data.notifications);
+
+                const graphData = buildGraphData(data.devices, data.connections, data.alerts);
+                renderGraph(graphData);
+
+                if (currentView === 'history') loadHistoryData();
+
+                let statusInfo = null;
+                try {
+                    const statusRes = await fetch(`${API_BASE}/api/status`, { signal: AbortSignal.timeout(1500) });
+                    if (statusRes.ok) statusInfo = await statusRes.json();
+                } catch (e) { /* status endpoint is optional context, ignore failures */ }
+
+                if (statusInfo && statusInfo.backend_mode === 'live') {
+                    if (statusInfo.permission_limited) {
+                        statusText.textContent = "Live capture — limited permissions";
+                        statusDot.style.background = "var(--risk-medium)";
+                    } else if (statusInfo.cycle_count === 0) {
+                        statusText.textContent = "Live capture starting…";
+                        statusDot.style.background = "var(--risk-medium)";
+                    } else if (statusInfo.baseline_active) {
+                        statusText.textContent = `Learning normal traffic — ${Math.ceil(statusInfo.baseline_seconds_remaining)}s left`;
+                        statusDot.style.background = "var(--risk-medium)";
+                    } else {
+                        statusText.textContent = `Live capture — ${statusInfo.local_ip || 'this device'}`;
+                        statusDot.style.background = "var(--success)";
+                    }
+                } else if (statusInfo && statusInfo.backend_mode === 'simulated') {
+                    statusText.textContent = "Connected — simulated data mode";
+                    statusDot.style.background = "var(--success)";
+                } else {
+                    statusText.textContent = "Live data connected";
+                    statusDot.style.background = "var(--success)";
+                }
+                return;
+            }
+            setDisconnectedState();
+        } catch (e) {
+            setDisconnectedState();
+        } finally {
+            isLoadingDashboard = false;
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        applyTheme('dark');
+        loadDashboard();
+        document.getElementById('refresh-btn').addEventListener('click', () => loadDashboard(false));
+        document.getElementById('history-range-select').addEventListener('change', loadHistoryData);
+        document.getElementById('audit-anchor-btn').addEventListener('click', handleAnchorNow);
+        document.getElementById('audit-verify-btn').addEventListener('click', handleVerifyCurrentState);
+
+        const AUTO_REFRESH_MS = 3000;
+        function startAutoRefresh() {
+            if (autoRefreshTimer) return;
+            autoRefreshTimer = setInterval(() => loadDashboard(true), AUTO_REFRESH_MS);
+        }
+        function stopAutoRefresh() {
+            if (!autoRefreshTimer) return;
+            clearInterval(autoRefreshTimer);
+            autoRefreshTimer = null;
+        }
+        startAutoRefresh();
+        // pause polling while the tab isn't visible, and refresh immediately on return
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                stopAutoRefresh();
+            } else {
+                loadDashboard(true);
+                startAutoRefresh();
+            }
+        });
+
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                switchView(link.dataset.view);
+            });
+        });
+
+        const searchInput = document.getElementById('search-input');
+        searchInput.addEventListener('input', () => {
+            const q = searchInput.value.toLowerCase().trim();
+            document.querySelectorAll('.alert-card').forEach(card => {
+                const match = !q || (card.dataset.search && card.dataset.search.includes(q));
+                card.style.display = match ? '' : 'none';
+            });
+        });
+
+        const notifBtn = document.getElementById('notif-btn');
+        const notifDropdown = document.getElementById('notif-dropdown');
+        notifBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            notifDropdown.classList.toggle('hidden');
+        });
+        document.addEventListener('click', (e) => {
+            if (!notifDropdown.contains(e.target) && e.target !== notifBtn) {
+                notifDropdown.classList.add('hidden');
+            }
+        });
+
+        const saveSettingsBtn = document.getElementById('save-settings-btn');
+        saveSettingsBtn.addEventListener('click', () => {
+            const val = document.getElementById('api-base-input').value.trim();
+            if (val) { API_BASE = val; loadDashboard(); }
+        });
+    });
+</script>
+</body>
+</html>
