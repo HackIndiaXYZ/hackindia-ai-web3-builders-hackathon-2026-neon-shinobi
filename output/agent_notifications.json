@@ -1,0 +1,21 @@
+[
+  {
+    "notification_id": "N001",
+    "timestamp": "2026-09-13T05:17:05.245077",
+    "src_ip": "127.0.0.1",
+    "alert_count": 1,
+    "risk_types": [
+      "PORT_SCANNING"
+    ],
+    "severity": "HIGH",
+    "priority_score": 4.0,
+    "summary": "Port Scanning detected from 127.0.0.1 (1 event(s)).",
+    "agent_reasoning": [
+      "Detected 1 alert(s) from source 127.0.0.1 within a 5-minute window -> correlated into one incident.",
+      "Highest severity among grouped alerts: HIGH -> base priority score established.",
+      "Threat signatures involved: PORT_SCANNING."
+    ],
+    "recommended_policy": "iptables -A FORWARD -s 127.0.0.1 -d 127.0.0.1 -j DROP",
+    "status": "AWAITING_ANALYST_REVIEW"
+  }
+]

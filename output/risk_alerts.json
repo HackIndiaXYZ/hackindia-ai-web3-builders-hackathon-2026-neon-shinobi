@@ -1,0 +1,13 @@
+[
+  {
+    "timestamp": "2026-09-13T05:17:05.245077",
+    "conn_id": "C0041",
+    "risk_type": "PORT_SCANNING",
+    "risk_level": "HIGH",
+    "confidence_score": 0.5,
+    "evidence": "Source 127.0.0.1 contacted 5 unique ports on 127.0.0.1 within 30 seconds \u2014 classic reconnaissance/port-scan pattern.",
+    "src_ip": "127.0.0.1",
+    "dst_ip": "127.0.0.1",
+    "src_process": "WUDFHost.exe"
+  }
+]

@@ -1,0 +1,18 @@
+[
+  {
+    "policy_id": "POL-C0041",
+    "generated_at": "2026-09-13T05:17:49.206611",
+    "based_on_alert": "PORT_SCANNING",
+    "risk_level": "HIGH",
+    "target": {
+      "src_ip": "127.0.0.1",
+      "dst_ip": "127.0.0.1"
+    },
+    "action": "BLOCK",
+    "iptables_rule": "iptables -A FORWARD -s 127.0.0.1 -d 127.0.0.1 -j DROP",
+    "nftables_rule": "nft add rule inet filter forward ip saddr 127.0.0.1 ip daddr 127.0.0.1 drop",
+    "explanation": "Blocks all traffic from 127.0.0.1 to 127.0.0.1 specifically.",
+    "evidence": "Source 127.0.0.1 contacted 5 unique ports on 127.0.0.1 within 30 seconds \u2014 classic reconnaissance/port-scan pattern.",
+    "status": "SUGGESTED"
+  }
+]
