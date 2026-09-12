@@ -115,6 +115,7 @@ There is no framework or bundler. The dashboard uses the generated static
 ## Policy approval workflow
 
 Generated policies are read-only recommendations until a human reviewer makes a decision in the dashboard. Each policy can be **Approved** or **Rejected**. The decision is persisted in SQLite and survives live capture cycles; it does **not** execute firewall commands. The backend exposes `POST /api/policies/<policy_id>/decision` and `GET /api/policy-decisions`.
+<<<<<<< HEAD
 
 ## Real AI Security Analyst
 
@@ -129,3 +130,5 @@ python backend_server.py --mode simulated --port 5000
 ```
 
 If `OPENAI_API_KEY` is absent or the API call fails, the UI explicitly labels the result as a deterministic fallback instead of pretending that a model was used.
+=======
+>>>>>>> aedc1db9c0a785e87c7499f58808919e6eb2e90c

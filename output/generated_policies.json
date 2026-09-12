@@ -1,7 +1,28 @@
 [
   {
+<<<<<<< HEAD
     "policy_id": "POL-C0041",
     "generated_at": "2026-09-13T05:17:49.206611",
+=======
+    "policy_id": "POL-C74242",
+    "generated_at": "2026-09-12T21:17:48.029930",
+    "based_on_alert": "FAN_OUT_LATERAL_MOVEMENT",
+    "risk_level": "MEDIUM",
+    "target": {
+      "src_ip": "192.168.5.226",
+      "dst_ip": null
+    },
+    "action": "RATE_LIMIT",
+    "iptables_rule": "iptables -A FORWARD -s 192.168.5.226 -m limit --limit 5/min -j ACCEPT\niptables -A FORWARD -s 192.168.5.226 -j DROP",
+    "nftables_rule": "nft add rule inet filter forward ip saddr 192.168.5.226 limit rate 5/minute accept",
+    "explanation": "Rate-limits source due to FAN_OUT_LATERAL_MOVEMENT pattern (no single destination).",
+    "evidence": "Source 192.168.5.226 connected to 24 distinct destinations it hadn't contacted before this session's baseline \u2014 unusually broad access pattern, possible reconnaissance or lateral movement.",
+    "status": "SUGGESTED"
+  },
+  {
+    "policy_id": "POL-C66303",
+    "generated_at": "2026-09-12T21:17:48.029948",
+>>>>>>> aedc1db9c0a785e87c7499f58808919e6eb2e90c
     "based_on_alert": "PORT_SCANNING",
     "risk_level": "HIGH",
     "target": {

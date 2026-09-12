@@ -1,4 +1,7 @@
 __pycache__/
 *.py[cod]
 *$py.class
+<<<<<<< HEAD
 .env
+=======
+>>>>>>> aedc1db9c0a785e87c7499f58808919e6eb2e90c

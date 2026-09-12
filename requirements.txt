@@ -2,6 +2,9 @@
 Flask>=3.0,<4.0
 Flask-Cors>=4.0,<7.0
 psutil>=5.9,<8.0
+<<<<<<< HEAD
 openai>=1.0.0
 python-dotenv>=1.0,<2.0
 web3[tester]>=7.0,<8.0
+=======
+>>>>>>> aedc1db9c0a785e87c7499f58808919e6eb2e90c

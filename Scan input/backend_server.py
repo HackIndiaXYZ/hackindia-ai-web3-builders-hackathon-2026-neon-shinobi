@@ -62,7 +62,10 @@ import risk_engine
 import policy_generator
 import alert_agent
 import db_store
+<<<<<<< HEAD
 import ai_security_analyst
+=======
+>>>>>>> aedc1db9c0a785e87c7499f58808919e6eb2e90c
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 OUTPUT_DIR = os.path.join(SCRIPT_DIR, "..", "output")
@@ -737,6 +740,7 @@ def get_notifications():
     return jsonify(notifications)
 
 
+<<<<<<< HEAD
 @app.route("/api/ai/analysis")
 def get_ai_analysis():
     """Run real LLM analysis when OPENAI_API_KEY is configured; otherwise show a clearly labelled fallback."""
@@ -765,6 +769,14 @@ def get_summary():
     return jsonify({
         "devices": devices,
         "connections": connections_for_ui,
+=======
+@app.route("/api/summary")
+def get_summary():
+    devices, connections, alerts, policies, notifications = _get_current_data()
+    return jsonify({
+        "devices": devices,
+        "connections": connections,
+>>>>>>> aedc1db9c0a785e87c7499f58808919e6eb2e90c
         "alerts": alerts,
         "policies": policies,
         "notifications": notifications,

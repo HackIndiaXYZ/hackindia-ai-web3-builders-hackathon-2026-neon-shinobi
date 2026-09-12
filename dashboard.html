@@ -162,6 +162,7 @@
     .impact-positive { color:var(--success); }
     .impact-warning { color:var(--risk-medium); }
     .impact-danger { color:var(--risk-high); }
+<<<<<<< HEAD
     /* Compact policy-impact scenarios: keep the advisory view dense and readable. */
     #impact-scenarios {
         display: grid;
@@ -190,6 +191,8 @@
         .impact-scenario-metrics { margin-top: 0; padding-top: 0; border-top: 0; text-align: right; }
     }
 
+=======
+>>>>>>> aedc1db9c0a785e87c7499f58808919e6eb2e90c
 
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
@@ -289,6 +292,7 @@
             </div>
             <span id="nav-policies-badge" class="badge badge-neutral">0</span>
         </a>
+<<<<<<< HEAD
         <a href="#" data-view="attackpath" class="nav-link flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-[13px] transition-all">
             <span class="material-symbols-outlined text-[19px]">route</span>
             <span>Attack path</span>
@@ -297,10 +301,13 @@
             <span class="material-symbols-outlined text-[19px]">devices_other</span>
             <span>Asset intelligence</span>
         </a>
+=======
+>>>>>>> aedc1db9c0a785e87c7499f58808919e6eb2e90c
         <a href="#" data-view="segmentation" class="nav-link flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-[13px] transition-all">
             <span class="material-symbols-outlined text-[19px]">account_tree</span>
             <span>Segmentation</span>
         </a>
+<<<<<<< HEAD
         <a href="#" data-view="impact" class="nav-link flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-[13px] transition-all">
             <span class="material-symbols-outlined text-[19px]">compare_arrows</span>
             <span>Policy impact</span>
@@ -309,6 +316,8 @@
             <span class="material-symbols-outlined text-[19px]">psychology</span>
             <span>AI security analyst</span>
         </a>
+=======
+>>>>>>> aedc1db9c0a785e87c7499f58808919e6eb2e90c
         <a href="#" data-view="simulation" class="nav-link flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-[13px] transition-all">
             <span class="material-symbols-outlined text-[19px]">science</span>
             <span>Policy simulator</span>
@@ -475,6 +484,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="policies-view-container"></div>
     </div>
 
+<<<<<<< HEAD
 
     <div class="flex-1 overflow-y-auto p-5 space-y-5 view-panel hidden" id="view-assets">
         <div class="flex items-center justify-between gap-4">
@@ -530,6 +540,8 @@
         </div>
     </div>
 
+=======
+>>>>>>> aedc1db9c0a785e87c7499f58808919e6eb2e90c
     <div class="flex-1 overflow-y-auto p-5 space-y-5 view-panel hidden" id="view-segmentation">
         <div class="flex items-center justify-between mb-2">
             <div>
@@ -555,6 +567,7 @@
         <div class="card rounded-xl overflow-hidden">
             <div class="px-4 py-2.5 border-b border-default flex items-center justify-between">
                 <span class="text-[12px] font-medium text-primary flex items-center gap-2">
+<<<<<<< HEAD
                     <span class="material-symbols-outlined text-[18px]" style="color:var(--accent)">lan</span>
                     Observed connections
                 </span>
@@ -566,6 +579,8 @@
         <div class="card rounded-xl overflow-hidden">
             <div class="px-4 py-2.5 border-b border-default flex items-center justify-between">
                 <span class="text-[12px] font-medium text-primary flex items-center gap-2">
+=======
+>>>>>>> aedc1db9c0a785e87c7499f58808919e6eb2e90c
                     <span class="material-symbols-outlined text-[18px]" style="color:var(--risk-high)">gpp_bad</span>
                     Observed policy violations
                 </span>
@@ -575,6 +590,7 @@
         </div>
     </div>
 
+<<<<<<< HEAD
 
     <div class="flex-1 overflow-y-auto p-5 space-y-5 view-panel hidden" id="view-impact">
         <div class="flex items-center justify-between gap-4">
@@ -670,6 +686,8 @@
         </div>
     </div>
 
+=======
+>>>>>>> aedc1db9c0a785e87c7499f58808919e6eb2e90c
     <div class="flex-1 overflow-y-auto p-5 space-y-5 view-panel hidden" id="view-simulation">
         <div class="flex items-center justify-between mb-2">
             <div>
@@ -745,13 +763,39 @@
             <div id="history-alerts-container"></div>
         </div>
 
+<<<<<<< HEAD
+=======
+        <div class="card rounded-xl overflow-hidden">
+            <div class="px-4 py-2.5 border-b border-default flex items-center justify-between">
+                <span class="text-[12px] font-medium text-primary flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[18px]" style="color:var(--accent)">link</span>
+                    On-chain audit trail
+                </span>
+                <div class="flex items-center gap-2">
+                    <button id="audit-verify-btn" class="px-2.5 py-1.5 rounded-lg border border-default text-[11px] font-mono transition-colors" style="color:var(--text-secondary);">
+                        Verify current state
+                    </button>
+                    <button id="audit-anchor-btn" class="px-2.5 py-1.5 rounded-lg text-[11px] font-mono transition-colors" style="background:var(--accent-soft); color:var(--accent); border:1px solid var(--accent-border);">
+                        Anchor now
+                    </button>
+                </div>
+            </div>
+            <div id="audit-network-info" class="px-4 py-2 text-[10px] font-mono text-muted border-b border-default"></div>
+            <div id="audit-verify-result" class="hidden px-4 py-2.5 text-[11px] font-mono border-b border-default"></div>
+            <div id="audit-history-container"></div>
+        </div>
+>>>>>>> aedc1db9c0a785e87c7499f58808919e6eb2e90c
     </div>
 
     <div class="flex-1 overflow-y-auto p-5 space-y-5 view-panel hidden" id="view-settings">
         <h2 class="text-lg font-semibold text-primary mb-4">Settings</h2>
         <div class="card rounded-xl p-5 max-w-lg">
             <label class="block text-xs font-mono text-muted mb-2">Backend API URL</label>
+<<<<<<< HEAD
             <input id="api-base-input" type="text" class="w-full rounded px-3 py-2 text-xs font-mono mb-4" value="http://127.0.0.1:5000" />
+=======
+            <input id="api-base-input" type="text" class="w-full rounded px-3 py-2 text-xs font-mono mb-4" value="http://localhost:5000" />
+>>>>>>> aedc1db9c0a785e87c7499f58808919e6eb2e90c
             <button id="save-settings-btn" class="px-4 py-2 rounded text-xs font-medium transition-colors" style="background:var(--accent-soft); color:var(--accent); border:1px solid var(--accent-border);">
                 Save &amp; reconnect
             </button>
@@ -761,6 +805,7 @@
 </main>
 
 <script>
+<<<<<<< HEAD
     let API_BASE = "http://127.0.0.1:5000";
     let simulation, svg, g, zoom, tooltip;
     let lastData = null;
@@ -770,6 +815,11 @@
     // status text ticking every second between silent API refreshes and catches
     // up immediately when the tab becomes visible again.
     let baselineDeadlineMs = 0;
+=======
+    let API_BASE = "http://localhost:5000";
+    let simulation, svg, g, zoom, tooltip;
+    let lastData = null;
+>>>>>>> aedc1db9c0a785e87c7499f58808919e6eb2e90c
     let nodePositions = {};   // ip -> {x, y} — persisted across auto-refreshes so the live topology doesn't jump around every cycle
     let isLoadingDashboard = false;
     let autoRefreshTimer = null;
@@ -823,7 +873,11 @@
         detail.innerHTML = `<div class="text-xs font-mono text-secondary">Loading asset profile…</div>`;
 
         try {
+<<<<<<< HEAD
             const response = await fetch(`${API_BASE}/api/devices/${encodeURIComponent(ip)}`, { signal: AbortSignal.timeout(15000) });
+=======
+            const response = await fetch(`${API_BASE}/api/devices/${encodeURIComponent(ip)}`, { signal: AbortSignal.timeout(2500) });
+>>>>>>> aedc1db9c0a785e87c7499f58808919e6eb2e90c
             const profile = await response.json();
             if (!response.ok) throw new Error(profile.error || 'Device profile unavailable');
 
@@ -953,6 +1007,7 @@
 
         const nodeIds = new Set(nodes.map(n => n.id));
 
+<<<<<<< HEAD
         // A live laptop can produce thousands of repeated socket records. The
         // topology only needs the observed relationship between two assets, not
         // every repeated packet/connection. Collapse duplicates into one visual
@@ -981,6 +1036,20 @@
                 return br - ar || b.count - a.count || String(a.source).localeCompare(String(b.source));
             })
             .slice(0, 450);
+=======
+        const links = connections
+            .filter(c => nodeIds.has(c.src_ip) && nodeIds.has(c.dst_ip))
+            .map(c => {
+                const alert = alertByConnId[c.conn_id];
+                return {
+                    source: c.src_ip,
+                    target: c.dst_ip,
+                    value: 1,
+                    riskLevel: alert ? alert.risk_level : null,
+                    alertType: alert ? alert.risk_type : null
+                };
+            });
+>>>>>>> aedc1db9c0a785e87c7499f58808919e6eb2e90c
 
         return { nodes, links };
     }
@@ -1077,13 +1146,22 @@
             n.fx = n.x; n.fy = n.y;
         });
 
+<<<<<<< HEAD
         // Keep the established radial/spiral layout. D3 is used only to resolve
         // link source/target references; the nodes are pinned and the solver is
         // stopped immediately, so refreshes cannot rearrange the topology.
+=======
+>>>>>>> aedc1db9c0a785e87c7499f58808919e6eb2e90c
         simulation = d3.forceSimulation(graphData.nodes)
             .force('link', d3.forceLink(graphData.links).id(d => d.id).distance(ringRadius).strength(0.01))
             .force('charge', d3.forceManyBody().strength(-5))
             .force('center', d3.forceCenter(centerX, centerY));
+<<<<<<< HEAD
+=======
+
+        // Pin everything and stop the solver. Dragging temporarily releases a node,
+        // then the end handler re-pins it, so refreshes remain stable.
+>>>>>>> aedc1db9c0a785e87c7499f58808919e6eb2e90c
         simulation.alpha(0).stop();
 
         if (!tooltip) tooltip = d3.select('body').append('div').attr('class','d3-tooltip').style('opacity',0);
@@ -1300,6 +1378,7 @@
         `).join("");
     }
 
+<<<<<<< HEAD
     function segmentLabel(segment) {
         return String(segment || 'unknown').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
     }
@@ -1408,12 +1487,17 @@
         if (countEl) countEl.textContent = `${paths.length} ranked paths · ${crossSegment.length} cross-segment observed overall`;
     }
 
+=======
+>>>>>>> aedc1db9c0a785e87c7499f58808919e6eb2e90c
     function renderSegmentation(data) {
         const countsEl = document.getElementById('segment-counts-container');
         const matrixEl = document.getElementById('segmentation-matrix-container');
         const violationsEl = document.getElementById('segmentation-violations-container');
+<<<<<<< HEAD
         const observedEl = document.getElementById('segmentation-observed-container');
         const observedSummaryEl = document.getElementById('segmentation-observed-summary');
+=======
+>>>>>>> aedc1db9c0a785e87c7499f58808919e6eb2e90c
         const summaryEl = document.getElementById('segmentation-summary');
         const modeEl = document.getElementById('segmentation-mode-badge');
         if (!countsEl || !matrixEl || !violationsEl) return;
@@ -1453,6 +1537,7 @@
         matrixEl.innerHTML = `<table class="w-full min-w-[760px]"><thead><tr><th class="px-3 py-2 text-left text-[10px] font-mono text-muted">SOURCE ↓ / DESTINATION →</th>${header}</tr></thead><tbody>${rows}</tbody></table>`;
 
         summaryEl.textContent = `ALLOW ${counts.ALLOW || 0} · RESTRICTED ${counts.RESTRICTED || 0} · DENY ${counts.DENY || 0}`;
+<<<<<<< HEAD
         const evaluations = Array.isArray(data?.evaluated_connections) ? data.evaluated_connections : [];
         if (observedSummaryEl) observedSummaryEl.textContent = `${evaluations.length} evaluated · live observed telemetry`;
         if (observedEl) {
@@ -1478,6 +1563,11 @@
         const violations = data?.denied_connections || [];
         if (!violations.length) {
             violationsEl.innerHTML = emptyStateHTML('No observed connections currently violate the segmentation model. The observed telemetry above is being evaluated correctly.', false);
+=======
+        const violations = data?.denied_connections || [];
+        if (!violations.length) {
+            violationsEl.innerHTML = emptyStateHTML('No observed connections currently violate the segmentation model.', false);
+>>>>>>> aedc1db9c0a785e87c7499f58808919e6eb2e90c
         } else {
             violationsEl.innerHTML = violations.slice(0, 50).map(v => `
                 <div class="px-4 py-3 border-b border-default flex items-center justify-between gap-4">
@@ -1519,6 +1609,111 @@
             renderHistoryChart([]);
             renderHistoryAlerts([]);
         }
+<<<<<<< HEAD
+=======
+        loadAuditData();
+    }
+
+    async function loadAuditData() {
+        const infoEl = document.getElementById('audit-network-info');
+        try {
+            const statusRes = await fetch(`${API_BASE}/api/audit/status`, { signal: AbortSignal.timeout(3000) });
+            const status = await statusRes.json();
+            const anchorBtn = document.getElementById('audit-anchor-btn');
+            const verifyBtn = document.getElementById('audit-verify-btn');
+
+            if (!status.available) {
+                infoEl.innerHTML = `<span style="color:var(--risk-medium)">Not available — ${status.error || 'web3 not configured'}</span>`;
+                anchorBtn.disabled = true;
+                verifyBtn.disabled = true;
+                anchorBtn.style.opacity = verifyBtn.style.opacity = '0.5';
+                document.getElementById('audit-history-container').innerHTML = '';
+                return;
+            }
+
+            anchorBtn.disabled = false;
+            verifyBtn.disabled = false;
+            anchorBtn.style.opacity = verifyBtn.style.opacity = '1';
+
+            const shortAddr = a => a ? `${a.slice(0, 6)}…${a.slice(-4)}` : '?';
+            infoEl.innerHTML = `${status.network_label} &middot; contract ${shortAddr(status.contract_address)} &middot; account ${shortAddr(status.account_address)}`;
+        } catch (e) {
+            infoEl.textContent = 'Could not reach the backend to check audit status.';
+        }
+
+        try {
+            const histRes = await fetch(`${API_BASE}/api/audit/history?limit=20`, { signal: AbortSignal.timeout(3000) });
+            const rows = histRes.ok ? await histRes.json() : [];
+            renderAuditHistory(rows);
+        } catch (e) {
+            renderAuditHistory([]);
+        }
+    }
+
+    function renderAuditHistory(rows) {
+        const el = document.getElementById('audit-history-container');
+        if (!rows || rows.length === 0) {
+            el.innerHTML = emptyStateHTML('No anchors yet — click "Anchor now" to write the current alerts/policies history hash on-chain.', false);
+            return;
+        }
+        const shortHash = h => h ? `${h.slice(0, 10)}…${h.slice(-6)}` : '?';
+        el.innerHTML = rows.map(r => `
+            <div class="px-4 py-2.5 flex items-center justify-between border-b border-default">
+                <div class="min-w-0">
+                    <p class="font-mono text-[11px] text-primary">${r.label || 'anchor'}</p>
+                    <p class="font-mono text-[10px] text-muted truncate">hash ${shortHash(r.content_hash)} &middot; tx ${shortHash(r.tx_hash)} &middot; block ${r.block_number}</p>
+                </div>
+                <span class="text-[10px] font-mono text-muted shrink-0 pl-3">${new Date(r.created_at).toLocaleTimeString()}</span>
+            </div>
+        `).join("");
+    }
+
+    async function handleAnchorNow() {
+        const btn = document.getElementById('audit-anchor-btn');
+        const original = btn.textContent;
+        btn.textContent = 'Anchoring…';
+        btn.disabled = true;
+        try {
+            const res = await fetch(`${API_BASE}/api/audit/anchor`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({}),
+                signal: AbortSignal.timeout(30000)
+            });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.error || `HTTP ${res.status}`);
+            }
+            await loadAuditData();
+        } catch (e) {
+            const infoEl = document.getElementById('audit-network-info');
+            infoEl.innerHTML = `<span style="color:var(--risk-high)">Anchor failed: ${e.message}</span>`;
+        } finally {
+            btn.textContent = original;
+            btn.disabled = false;
+        }
+    }
+
+    async function handleVerifyCurrentState() {
+        const resultEl = document.getElementById('audit-verify-result');
+        resultEl.classList.remove('hidden');
+        resultEl.textContent = 'Checking…';
+        resultEl.style.color = 'var(--text-secondary)';
+        try {
+            const res = await fetch(`${API_BASE}/api/audit/verify`, { signal: AbortSignal.timeout(5000) });
+            const data = await res.json();
+            if (data.found) {
+                resultEl.style.color = 'var(--success)';
+                resultEl.textContent = `✓ Current history matches an on-chain anchor (id ${data.record.anchor_id}, "${data.record.label}") — nothing has changed since.`;
+            } else {
+                resultEl.style.color = 'var(--risk-medium)';
+                resultEl.textContent = `Current history doesn't match any anchor — either nothing's been anchored yet, or something changed since the last anchor.`;
+            }
+        } catch (e) {
+            resultEl.style.color = 'var(--risk-high)';
+            resultEl.textContent = `Verify failed: ${e.message}`;
+        }
+>>>>>>> aedc1db9c0a785e87c7499f58808919e6eb2e90c
     }
 
     function renderHistoryChart(rows) {
@@ -1664,6 +1859,7 @@
         }
     }
 
+<<<<<<< HEAD
 
     async function loadPolicyImpactCenter() {
         const summary = document.getElementById('impact-summary');
@@ -1797,6 +1993,12 @@
     function switchView(viewName) {
         currentView = viewName;
         try { localStorage.setItem('aegis_current_view', viewName); } catch (e) {}
+=======
+    let currentView = 'dashboard';
+
+    function switchView(viewName) {
+        currentView = viewName;
+>>>>>>> aedc1db9c0a785e87c7499f58808919e6eb2e90c
         document.querySelectorAll('.view-panel').forEach(v => v.classList.add('hidden'));
         const target = document.getElementById(`view-${viewName}`);
         if (target) target.classList.remove('hidden');
@@ -1804,17 +2006,23 @@
         document.querySelectorAll('.nav-link').forEach(l => l.classList.toggle('active', l.dataset.view === viewName));
 
         if (lastData) {
+<<<<<<< HEAD
             if (viewName === 'dashboard') {
                 try { renderGraph(buildGraphData(lastData.devices || [], lastData.connections || [], lastData.alerts || [])); } catch (e) { console.error('Topology render failed:', e); }
             }
+=======
+>>>>>>> aedc1db9c0a785e87c7499f58808919e6eb2e90c
             if (viewName === 'alerts') renderAlerts(lastData.alerts, 'alerts-view-container');
             if (viewName === 'policies') renderPolicies(lastData.policies, 'policies-view-container');
             if (viewName === 'segmentation') loadSegmentationData();
             if (viewName === 'simulation') populateSimulationControls();
+<<<<<<< HEAD
             if (viewName === 'assets') loadAssetIntelligence();
             if (viewName === 'attackpath') renderAttackPath();
             if (viewName === 'impact') loadPolicyImpactCenter();
             if (viewName === 'ai') loadAIAnalyst();
+=======
+>>>>>>> aedc1db9c0a785e87c7499f58808919e6eb2e90c
         }
         if (viewName === 'history') loadHistoryData();
     }
@@ -1836,6 +2044,7 @@
         renderGraph({ nodes: [], links: [] });
     }
 
+<<<<<<< HEAD
     function updateBaselineTicker() {
         const statusText = document.getElementById('status-text');
         const statusDot = document.getElementById('status-dot');
@@ -1854,6 +2063,8 @@
     // UI countdown only; the actual live capture continues in the backend.
     setInterval(updateBaselineTicker, 1000);
 
+=======
+>>>>>>> aedc1db9c0a785e87c7499f58808919e6eb2e90c
     async function loadDashboard(silent = false) {
         if (isLoadingDashboard) return;  // don't stack overlapping requests if one is slow
         isLoadingDashboard = true;
@@ -1867,11 +2078,16 @@
         }
 
         try {
+<<<<<<< HEAD
             const summaryRes = await fetch(`${API_BASE}/api/summary?connection_limit=450`, { signal: AbortSignal.timeout(20000) });
+=======
+            const summaryRes = await fetch(`${API_BASE}/api/summary`, { signal: AbortSignal.timeout(2500) });
+>>>>>>> aedc1db9c0a785e87c7499f58808919e6eb2e90c
             if (summaryRes.ok) {
                 const data = await summaryRes.json();
                 lastData = data;
 
+<<<<<<< HEAD
                 // The API response itself is authoritative. Mark the connection
                 // healthy before rendering optional panels, so a visualization
                 // failure can never make a working backend look disconnected.
@@ -1880,6 +2096,8 @@
                 statusText.textContent = 'Live data connected';
                 statusDot.style.background = 'var(--success)';
 
+=======
+>>>>>>> aedc1db9c0a785e87c7499f58808919e6eb2e90c
                 renderMetrics(data.metrics);
                 renderAlerts(data.alerts, 'alerts-container');
                 renderAlerts(data.alerts, 'alerts-view-container');
@@ -1887,6 +2105,7 @@
                 renderPolicies(data.policies, 'policies-view-container');
                 renderNotifications(data.notifications);
                 if (currentView === 'segmentation') loadSegmentationData();
+<<<<<<< HEAD
                 if (currentView === 'attackpath') renderAttackPath();
 
                 try {
@@ -1906,6 +2125,17 @@
                 let statusInfo = null;
                 try {
                     const statusRes = await fetch(`${API_BASE}/api/status`, { signal: AbortSignal.timeout(5000) });
+=======
+
+                const graphData = buildGraphData(data.devices, data.connections, data.alerts);
+                renderGraph(graphData);
+
+                if (currentView === 'history') loadHistoryData();
+
+                let statusInfo = null;
+                try {
+                    const statusRes = await fetch(`${API_BASE}/api/status`, { signal: AbortSignal.timeout(1500) });
+>>>>>>> aedc1db9c0a785e87c7499f58808919e6eb2e90c
                     if (statusRes.ok) statusInfo = await statusRes.json();
                 } catch (e) { /* status endpoint is optional context, ignore failures */ }
 
@@ -1917,10 +2147,16 @@
                         statusText.textContent = "Live capture starting…";
                         statusDot.style.background = "var(--risk-medium)";
                     } else if (statusInfo.baseline_active) {
+<<<<<<< HEAD
                         baselineDeadlineMs = Date.now() + (Number(statusInfo.baseline_seconds_remaining || 0) * 1000);
                         updateBaselineTicker();
                     } else {
                         baselineDeadlineMs = 0;
+=======
+                        statusText.textContent = `Learning normal traffic — ${Math.ceil(statusInfo.baseline_seconds_remaining)}s left`;
+                        statusDot.style.background = "var(--risk-medium)";
+                    } else {
+>>>>>>> aedc1db9c0a785e87c7499f58808919e6eb2e90c
                         statusText.textContent = `Live capture — ${statusInfo.local_ip || 'this device'}`;
                         statusDot.style.background = "var(--success)";
                     }
@@ -1935,12 +2171,16 @@
             }
             setDisconnectedState();
         } catch (e) {
+<<<<<<< HEAD
             console.error('Dashboard data load failed:', e);
             const reason = e?.name === 'TimeoutError' || e?.name === 'AbortError'
                 ? 'Backend response timed out'
                 : (e?.message || 'Backend request failed');
             setDisconnectedState();
             showToast(reason, true);
+=======
+            setDisconnectedState();
+>>>>>>> aedc1db9c0a785e87c7499f58808919e6eb2e90c
         } finally {
             isLoadingDashboard = false;
         }
@@ -1962,11 +2202,17 @@
         loadDashboard();
         document.getElementById('refresh-btn').addEventListener('click', () => loadDashboard(false));
         document.getElementById('history-range-select').addEventListener('change', loadHistoryData);
+<<<<<<< HEAD
         document.getElementById('run-policy-simulation').addEventListener('click', runPolicySimulation);
         document.getElementById('assets-refresh')?.addEventListener('click', loadAssetIntelligence);
         document.getElementById('attackpath-refresh')?.addEventListener('click', renderAttackPath);
         document.getElementById('attackpath-source')?.addEventListener('change', renderAttackPath);
         document.getElementById('impact-refresh')?.addEventListener('click', loadPolicyImpactCenter);
+=======
+        document.getElementById('audit-anchor-btn').addEventListener('click', handleAnchorNow);
+        document.getElementById('audit-verify-btn').addEventListener('click', handleVerifyCurrentState);
+        document.getElementById('run-policy-simulation').addEventListener('click', runPolicySimulation);
+>>>>>>> aedc1db9c0a785e87c7499f58808919e6eb2e90c
         populateSimulationControls();
 
         const AUTO_REFRESH_MS = 3000;
@@ -1980,6 +2226,7 @@
             autoRefreshTimer = null;
         }
         startAutoRefresh();
+<<<<<<< HEAD
         // The backend capture loop is independent of the browser tab. Keep the
         // dashboard polling timer alive as well; when the tab becomes visible,
         // immediately fetch the latest state and let the ticker catch up.
@@ -1987,6 +2234,15 @@
             if (!document.hidden) {
                 updateBaselineTicker();
                 loadDashboard(true);
+=======
+        // pause polling while the tab isn't visible, and refresh immediately on return
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                stopAutoRefresh();
+            } else {
+                loadDashboard(true);
+                startAutoRefresh();
+>>>>>>> aedc1db9c0a785e87c7499f58808919e6eb2e90c
             }
         });
 
