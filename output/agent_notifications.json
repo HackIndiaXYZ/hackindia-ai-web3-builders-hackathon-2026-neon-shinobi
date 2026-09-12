@@ -1,0 +1,40 @@
+[
+  {
+    "notification_id": "N001",
+    "timestamp": "2026-09-12T21:13:57.714300",
+    "src_ip": "127.0.0.1",
+    "alert_count": 1,
+    "risk_types": [
+      "PORT_SCANNING"
+    ],
+    "severity": "HIGH",
+    "priority_score": 4.0,
+    "summary": "Port Scanning detected from 127.0.0.1 (1 event(s)).",
+    "agent_reasoning": [
+      "Detected 1 alert(s) from source 127.0.0.1 within a 5-minute window -> correlated into one incident.",
+      "Highest severity among grouped alerts: HIGH -> base priority score established.",
+      "Threat signatures involved: PORT_SCANNING."
+    ],
+    "recommended_policy": "iptables -A FORWARD -s 127.0.0.1 -d 127.0.0.1 -j DROP",
+    "status": "AWAITING_ANALYST_REVIEW"
+  },
+  {
+    "notification_id": "N002",
+    "timestamp": "2026-09-12T21:17:47.790586",
+    "src_ip": "192.168.5.226",
+    "alert_count": 1,
+    "risk_types": [
+      "FAN_OUT_LATERAL_MOVEMENT"
+    ],
+    "severity": "MEDIUM",
+    "priority_score": 3.2,
+    "summary": "Fan Out Lateral Movement detected from 192.168.5.226 (1 event(s)).",
+    "agent_reasoning": [
+      "Detected 1 alert(s) from source 192.168.5.226 within a 5-minute window -> correlated into one incident.",
+      "Highest severity among grouped alerts: MEDIUM -> base priority score established.",
+      "Threat signatures involved: FAN_OUT_LATERAL_MOVEMENT."
+    ],
+    "recommended_policy": "iptables -A FORWARD -s 192.168.5.226 -m limit --limit 5/min -j ACCEPT\niptables -A FORWARD -s 192.168.5.226 -j DROP",
+    "status": "AWAITING_ANALYST_REVIEW"
+  }
+]

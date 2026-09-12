@@ -1,0 +1,24 @@
+[
+  {
+    "timestamp": "2026-09-12T21:17:47.790586",
+    "conn_id": "C74242",
+    "risk_type": "FAN_OUT_LATERAL_MOVEMENT",
+    "risk_level": "MEDIUM",
+    "confidence_score": 0.7,
+    "evidence": "Source 192.168.5.226 connected to 24 distinct destinations it hadn't contacted before this session's baseline \u2014 unusually broad access pattern, possible reconnaissance or lateral movement.",
+    "src_ip": "192.168.5.226",
+    "dst_ip": null,
+    "src_process": "vivaldi.exe"
+  },
+  {
+    "timestamp": "2026-09-12T21:13:57.714300",
+    "conn_id": "C66303",
+    "risk_type": "PORT_SCANNING",
+    "risk_level": "HIGH",
+    "confidence_score": 0.5,
+    "evidence": "Source 127.0.0.1 contacted 5 unique ports on 127.0.0.1 within 30 seconds \u2014 classic reconnaissance/port-scan pattern.",
+    "src_ip": "127.0.0.1",
+    "dst_ip": "127.0.0.1",
+    "src_process": null
+  }
+]
