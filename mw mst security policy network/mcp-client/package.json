@@ -1,0 +1,16 @@
+{
+  "name": "mst-mcp-client",
+  "version": "1.0.0",
+  "description": "Docs-lookup client for the official MST-MCP server (read-only).",
+  "main": "testMcp.js",
+  "scripts": {
+    "test-connection": "node testMcp.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "dotenv": "^17.4.2"
+  }
+}

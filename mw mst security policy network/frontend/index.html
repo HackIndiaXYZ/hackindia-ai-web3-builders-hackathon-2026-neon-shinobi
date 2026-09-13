@@ -1,0 +1,581 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MST Security Policy Network</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #12151B;
+    --surface: #1B2029;
+    --surface-raised: #202632;
+    --line: #2A3140;
+    --text: #E4E7EC;
+    --text-muted: #8A93A6;
+    --pending: #E2B93B;
+    --approved: #3FA796;
+    --denied: #C0533F;
+    --focus: #6EA8E0;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', system-ui, sans-serif;
+  }
+
+  code, .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+
+  a { color: var(--focus); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  button {
+    font-family: inherit;
+    font-size: 0.9rem;
+    cursor: pointer;
+    border-radius: 3px;
+    border: 1px solid var(--line);
+    background: var(--surface-raised);
+    color: var(--text);
+    padding: 0.55rem 1rem;
+  }
+  button:hover { border-color: var(--focus); }
+  button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 1px;
+  }
+  button.primary {
+    background: var(--focus);
+    border-color: var(--focus);
+    color: #0B1521;
+    font-weight: 500;
+  }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  input, select, textarea {
+    font-family: inherit;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    color: var(--text);
+    border-radius: 3px;
+    padding: 0.5rem 0.6rem;
+    font-size: 0.9rem;
+    width: 100%;
+  }
+
+  label { font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.3rem; }
+
+  .app {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    height: 100vh;
+  }
+
+  @media (max-width: 780px) {
+    .app { grid-template-columns: 1fr; grid-template-rows: auto auto; height: auto; min-height: 100vh; }
+  }
+
+  .rail {
+    border-right: 1px solid var(--line);
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .rail-header {
+    padding: 1.1rem 1.1rem 0.9rem;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .brand {
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+  }
+  .brand-sub {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-top: 0.2rem;
+  }
+
+  .rail-list {
+    overflow-y: auto;
+    flex: 1;
+    min-height: 200px;
+  }
+
+  .policy-row {
+    padding: 0.8rem 1.1rem;
+    border-bottom: 1px solid var(--line);
+    cursor: pointer;
+  }
+  .policy-row:hover { background: var(--surface); }
+  .policy-row.active { background: var(--surface); border-left: 2px solid var(--focus); }
+
+  .policy-row .path {
+    font-size: 0.88rem;
+    font-weight: 500;
+  }
+  .policy-row .meta {
+    font-size: 0.76rem;
+    color: var(--text-muted);
+    margin-top: 0.25rem;
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  .badge {
+    font-size: 0.72rem;
+    padding: 0.12rem 0.45rem;
+    border-radius: 3px;
+    border: 1px solid;
+  }
+  .badge.PROPOSED { color: var(--pending); border-color: var(--pending); }
+  .badge.ACTIVE { color: var(--approved); border-color: var(--approved); }
+  .badge.EXPIRED { color: var(--pending); border-color: var(--pending); }
+  .badge.APPROVED { color: var(--approved); border-color: var(--approved); }
+  .badge.REJECTED, .badge.REVOKED { color: var(--denied); border-color: var(--denied); }
+
+  .rail-footer { padding: 0.9rem 1.1rem; border-top: 1px solid var(--line); }
+  .rail-footer button { width: 100%; }
+
+  .main {
+    padding: 1.6rem 2rem;
+    overflow-y: auto;
+  }
+
+  .empty-state {
+    color: var(--text-muted);
+    max-width: 40ch;
+    margin-top: 3rem;
+  }
+
+  .gate {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.6rem 0;
+    margin-bottom: 1.4rem;
+  }
+  .segment {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    padding: 0.9rem 1.3rem;
+    font-size: 1.05rem;
+    font-weight: 500;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+  .gate-line {
+    flex: 1;
+    height: 1px;
+    background: var(--line);
+    position: relative;
+    min-width: 40px;
+  }
+  .gate-line.APPROVED { background: var(--approved); height: 2px; }
+  .gate-line.PROPOSED {
+    background-image: linear-gradient(to right, var(--pending) 50%, transparent 50%);
+    background-size: 10px 2px;
+    background-repeat: repeat-x;
+    height: 2px;
+  }
+  .barrier {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--bg);
+    padding: 0.15rem 0.5rem;
+    font-size: 0.78rem;
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+  .barrier.PROPOSED { border-color: var(--pending); color: var(--pending); }
+  .barrier.APPROVED { border-color: var(--approved); color: var(--approved); }
+
+  .policy-title { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.2rem; }
+
+  .split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.4rem;
+    align-items: start;
+  }
+  @media (max-width: 700px) { .split { grid-template-columns: 1fr; } }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 1.1rem 1.3rem;
+  }
+  .panel h3 {
+    margin: 0 0 0.9rem;
+    font-size: 0.88rem;
+    font-weight: 600;
+  }
+  .panel h3 span { color: var(--text-muted); font-weight: 400; }
+
+  dl { margin: 0; }
+  dl .row { display: flex; justify-content: space-between; gap: 1rem; padding: 0.45rem 0; border-bottom: 1px solid var(--line); }
+  dl .row:last-child { border-bottom: none; }
+  dt { color: var(--text-muted); font-size: 0.82rem; }
+  dd { margin: 0; font-size: 0.85rem; text-align: right; word-break: break-all; }
+
+  .actions { margin-top: 1.2rem; display: flex; gap: 0.7rem; align-items: center; }
+
+  .integrity-pass { color: var(--approved); }
+  .integrity-fail { color: var(--denied); }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.8rem;
+  }
+  .form-grid .full { grid-column: 1 / -1; }
+
+  .banner {
+    background: #2A1A1A;
+    border: 1px solid var(--denied);
+    color: #F0C9C2;
+    padding: 0.7rem 1rem;
+    border-radius: 3px;
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+  }
+
+  .banner.ok {
+    background: #16241F;
+    border-color: var(--approved);
+    color: #BFEFE2;
+  }
+
+  dialog {
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    padding: 1.4rem;
+    width: min(480px, 90vw);
+  }
+  dialog::backdrop { background: rgba(0,0,0,0.55); }
+  dialog h2 { font-size: 1rem; margin: 0 0 1rem; font-weight: 600; }
+  dialog .form-actions { display: flex; justify-content: flex-end; gap: 0.6rem; margin-top: 1.2rem; }
+
+  .config-row { display: flex; gap: 0.5rem; margin-top: 0.7rem; }
+  .config-row input { font-size: 0.78rem; }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <aside class="rail">
+    <div class="rail-header">
+      <div class="brand">MST Security Policy Network</div>
+      <div class="brand-sub">Verifiable authorization for security policy state</div>
+    </div>
+    <div class="rail-list" id="policyList">
+      <div style="padding:1rem 1.1rem; color:var(--text-muted); font-size:0.85rem;">Loading policies…</div>
+    </div>
+    <div class="rail-footer">
+      <button class="primary" id="openProposeBtn">Propose new policy</button>
+    </div>
+  </aside>
+
+  <main class="main" id="main">
+    <div class="empty-state">
+      Select a policy on the left, or propose a new one.
+      Every action here is a real MST Testnet transaction.
+    </div>
+  </main>
+</div>
+
+<dialog id="proposeDialog">
+  <h2>Propose a security policy</h2>
+  <div id="proposeError"></div>
+  <form id="proposeForm">
+    <div class="form-grid">
+      <div>
+        <label for="sourceSegment">Source segment</label>
+        <input id="sourceSegment" required placeholder="Guest" value="Guest" />
+      </div>
+      <div>
+        <label for="destSegment">Destination segment</label>
+        <input id="destSegment" required placeholder="Finance" value="Finance" />
+      </div>
+      <div>
+        <label for="protocol">Protocol</label>
+        <select id="protocol">
+          <option>TCP</option>
+          <option>UDP</option>
+        </select>
+      </div>
+      <div>
+        <label for="port">Port</label>
+        <input id="port" type="number" required value="3306" />
+      </div>
+      <div>
+        <label for="action">Action</label>
+        <select id="action">
+          <option>DENY</option>
+          <option>ALLOW</option>
+        </select>
+      </div>
+      <div>
+        <label for="risk">Risk level</label>
+        <select id="risk">
+          <option>LOW</option>
+          <option>MEDIUM</option>
+          <option selected>HIGH</option>
+          <option>CRITICAL</option>
+        </select>
+      </div>
+      <div>
+        <label for="expiresAt">Expires at (Unix time, optional)</label>
+        <input id="expiresAt" type="number" min="0" value="0" />
+      </div>
+      <div class="full">
+        <label for="reason">Reason</label>
+        <textarea id="reason" rows="2" placeholder="Why this policy is needed">Guest network must not reach the Finance database directly</textarea>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button type="button" id="cancelProposeBtn">Cancel</button>
+      <button type="submit" class="primary" id="submitProposeBtn">Propose on-chain</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+const DEFAULT_API_BASE = 'http://localhost:4000';
+const apiBase = localStorage.getItem('mst_api_base') || DEFAULT_API_BASE;
+
+let policies = [];
+let selectedId = null;
+let editingPolicyId = null;
+
+async function api(path, opts = {}) {
+  const res = await fetch(apiBase + path, {
+    headers: { 'Content-Type': 'application/json' },
+    ...opts,
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(body.error || `Request failed (${res.status})`);
+  }
+  return body;
+}
+
+function statusOf(p) {
+  return p.status || (p.onChain && p.onChain.status) || 'PROPOSED';
+}
+
+function renderList() {
+  const el = document.getElementById('policyList');
+  if (policies.length === 0) {
+    el.innerHTML = `<div style="padding:1rem 1.1rem; color:var(--text-muted); font-size:0.85rem;">
+      No policies yet. Propose one to create the first on-chain record.
+    </div>`;
+    return;
+  }
+  el.innerHTML = policies
+    .slice()
+    .reverse()
+    .map((p) => {
+      const payload = p.payload || {};
+      const status = p.onChain?.effectiveStatus || 'PROPOSED';
+      const active = p.policyId === selectedId ? 'active' : '';
+      return `
+        <div class="policy-row ${active}" data-id="${p.policyId}">
+          <div class="path">${escapeHtml(payload.sourceSegment || '?')} → ${escapeHtml(payload.destSegment || '?')}</div>
+          <div class="meta">
+            <span class="badge ${status}">${status}</span>
+            <span>${escapeHtml(payload.action || '')} · ${escapeHtml(String(payload.port || ''))}</span>
+          </div>
+        </div>`;
+    })
+    .join('');
+
+  el.querySelectorAll('.policy-row').forEach((row) => {
+    row.addEventListener('click', () => selectPolicy(row.dataset.id));
+  });
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, (c) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+}
+
+function shortHash(h) {
+  if (!h) return '—';
+  return h.slice(0, 10) + '…' + h.slice(-6);
+}
+
+function txLink(hash) {
+  if (!hash) return '—';
+  return `<a href="https://testnet.mstscan.com/tx/${hash}" target="_blank" rel="noopener" class="mono">${shortHash(hash)}</a>`;
+}
+
+async function loadPolicies() {
+  try {
+    policies = await api('/v2/policies');
+    renderList();
+  } catch (err) {
+    document.getElementById('policyList').innerHTML =
+      `<div class="banner" style="margin:1rem;">Could not reach the backend at ${apiBase}. Is it running? (${err.message})</div>`;
+  }
+}
+
+async function selectPolicy(policyId) {
+  selectedId = policyId;
+  renderList();
+  const main = document.getElementById('main');
+  main.innerHTML = `<div class="empty-state">Loading policy…</div>`;
+
+  try {
+    const detail = await api(`/v2/policies/${policyId}`);
+    renderDetail(detail);
+  } catch (err) {
+    main.innerHTML = `<div class="banner">Failed to load policy: ${escapeHtml(err.message)}</div>`;
+  }
+}
+
+function renderDetail(detail) {
+  const { payload, onChain, integrityCheck, proposeTx, securityApproveTx, networkApproveTx, contract, policyId } = detail;
+  const status = onChain.effectiveStatus;
+  const main = document.getElementById('main');
+  const actionButton = (id, label, path, primary = false) => `<button ${primary ? 'class="primary"' : ''} id="${id}">${label}</button>`;
+
+  main.innerHTML = `
+    <div class="policy-title">Policy <span class="mono">${shortHash(policyId)}</span> · version ${detail.currentVersion}</div>
+    <div class="gate">
+      <div class="segment">${escapeHtml(payload.sourceSegment)}</div>
+      <div class="gate-line ${status}"><div class="barrier ${status}">${escapeHtml(payload.action)} ${escapeHtml(String(payload.port))}/${escapeHtml(payload.protocol)}</div></div>
+      <div class="segment">${escapeHtml(payload.destSegment)}</div>
+    </div>
+    <div class="split">
+      <div class="panel">
+        <h3>Recorded off-chain</h3>
+        <dl>
+          <div class="row"><dt>Reason</dt><dd>${escapeHtml(payload.reason || '—')}</dd></div>
+          <div class="row"><dt>Risk</dt><dd>${escapeHtml(payload.risk)}</dd></div>
+          <div class="row"><dt>Protocol / Port</dt><dd class="mono">${escapeHtml(payload.protocol)}/${escapeHtml(String(payload.port))}</dd></div>
+          <div class="row"><dt>Expires at</dt><dd>${onChain.expiresAt ? new Date(onChain.expiresAt * 1000).toLocaleString() : 'Never'}</dd></div>
+        </dl>
+      </div>
+      <div class="panel">
+        <h3>Verified on-chain <span>· ${escapeHtml(contract.slice(0,10))}…</span></h3>
+        <dl>
+          <div class="row"><dt>MST status</dt><dd><span class="badge ${status}">${status}</span></dd></div>
+          <div class="row"><dt>Creator</dt><dd class="mono">${shortHash(detail.creator)}</dd></div>
+          <div class="row"><dt>Approvals</dt><dd>${onChain.approvalCount} / ${onChain.requiredApprovals}</dd></div>
+          <div class="row"><dt>Propose tx</dt><dd>${txLink(proposeTx)}</dd></div>
+          <div class="row"><dt>Security approval</dt><dd>${txLink(securityApproveTx)}</dd></div>
+          <div class="row"><dt>Network approval</dt><dd>${txLink(networkApproveTx)}</dd></div>
+          <div class="row"><dt>Integrity check</dt><dd class="${integrityCheck === 'PASS' ? 'integrity-pass' : 'integrity-fail'}">${integrityCheck}</dd></div>
+        </dl>
+        <div class="actions">
+          ${status === 'PROPOSED' ? actionButton('approveBtn', 'Security approve', '/approve', true) : ''}
+          ${status === 'PROPOSED' && onChain.risk === 'CRITICAL' && onChain.approvalCount === 1 ? actionButton('networkApproveBtn', 'Network approve') : ''}
+          ${status === 'PROPOSED' ? actionButton('rejectBtn', 'Reject') : ''}
+          ${status === 'ACTIVE' ? actionButton('revokeBtn', 'Revoke') : ''}
+          ${status !== 'REJECTED' && status !== 'REVOKED' ? actionButton('reviseBtn', 'Revise') : ''}
+          ${status === 'ACTIVE' ? `<span class="integrity-pass">MST STATUS: AUTHORIZED ✓</span>` : `<span class="integrity-fail">MST STATUS: AUTHORIZED ✗</span>`}
+        </div>
+      </div>
+    </div>`;
+
+  const runAction = async (buttonId, label, path) => {
+    const button = document.getElementById(buttonId);
+    if (!button) return;
+    button.addEventListener('click', async () => {
+      button.disabled = true;
+      button.textContent = 'Signing transaction…';
+      try {
+        await api(`/v2/policies/${policyId}${path}`, { method: 'POST' });
+        await loadPolicies();
+        await selectPolicy(policyId);
+      } catch (err) {
+        button.disabled = false;
+        button.textContent = label;
+        alert(`${label} failed: ${err.message}`);
+      }
+    });
+  };
+  runAction('approveBtn', 'Security approve', '/approve');
+  runAction('networkApproveBtn', 'Network approve', '/network-approve');
+  runAction('rejectBtn', 'Reject', '/reject');
+  runAction('revokeBtn', 'Revoke', '/revoke');
+  const reviseBtn = document.getElementById('reviseBtn');
+  if (reviseBtn) {
+    reviseBtn.addEventListener('click', () => {
+      editingPolicyId = policyId;
+      document.getElementById('sourceSegment').value = payload.sourceSegment || '';
+      document.getElementById('destSegment').value = payload.destSegment || '';
+      document.getElementById('protocol').value = payload.protocol || 'TCP';
+      document.getElementById('port').value = payload.port || 0;
+      document.getElementById('action').value = payload.action || 'DENY';
+      document.getElementById('risk').value = payload.risk || 'LOW';
+      document.getElementById('reason').value = payload.reason || '';
+      document.getElementById('expiresAt').value = onChain.expiresAt || 0;
+      dialog.showModal();
+    });
+  }
+}
+
+// Propose dialog wiring
+const dialog = document.getElementById('proposeDialog');
+document.getElementById('openProposeBtn').addEventListener('click', () => {
+  editingPolicyId = null;
+  document.getElementById('proposeError').innerHTML = '';
+  dialog.showModal();
+});
+document.getElementById('cancelProposeBtn').addEventListener('click', () => dialog.close());
+
+document.getElementById('proposeForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const submitBtn = document.getElementById('submitProposeBtn');
+  const errorBox = document.getElementById('proposeError');
+  errorBox.innerHTML = '';
+
+  const payload = {
+    sourceSegment: document.getElementById('sourceSegment').value.trim(),
+    destSegment: document.getElementById('destSegment').value.trim(),
+    protocol: document.getElementById('protocol').value,
+    port: Number(document.getElementById('port').value),
+    action: document.getElementById('action').value,
+    risk: document.getElementById('risk').value,
+    expiresAt: Number(document.getElementById('expiresAt').value || 0),
+    reason: document.getElementById('reason').value.trim(),
+  };
+
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Signing transaction…';
+
+  try {
+    const endpoint = editingPolicyId ? `/v2/policies/${editingPolicyId}/revise` : '/v2/policies';
+    const result = await api(endpoint, { method: 'POST', body: JSON.stringify(payload) });
+    dialog.close();
+    await loadPolicies();
+    await selectPolicy(result.policyId || editingPolicyId);
+  } catch (err) {
+    errorBox.innerHTML = `<div class="banner">${escapeHtml(err.message)}</div>`;
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Propose on-chain';
+  }
+});
+
+loadPolicies();
+setInterval(loadPolicies, 15000);
+</script>
+</body>
+</html>

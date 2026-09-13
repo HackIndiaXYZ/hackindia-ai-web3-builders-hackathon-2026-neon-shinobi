@@ -1,0 +1,82 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>BridgeKey detection test</title>
+<style>
+  body { font-family: monospace; background: #111; color: #eee; padding: 2rem; white-space: pre-wrap; }
+  h1 { font-size: 1rem; color: #6EA8E0; }
+  button { padding: 0.6rem 1rem; margin-bottom: 1rem; cursor: pointer; }
+  #log { border: 1px solid #333; padding: 1rem; min-height: 200px; }
+</style>
+</head>
+<body>
+<h1>BridgeKey wallet detection test</h1>
+<p>Purpose: find out exactly how BridgeKey exposes itself to a webpage, before we wire real integration into the dashboard.</p>
+<button id="run">Run detection</button>
+<div id="log">(click "Run detection" — make sure the BridgeKey extension is installed and enabled first)</div>
+
+<script>
+const log = (msg) => {
+  document.getElementById('log').textContent += '\n' + msg;
+};
+
+document.getElementById('run').addEventListener('click', async () => {
+  document.getElementById('log').textContent = '';
+
+  // Check 1: classic injected provider (EIP-1193 style)
+  if (window.ethereum) {
+    log('✓ window.ethereum exists');
+    log('  isMetaMask: ' + window.ethereum.isMetaMask);
+    log('  providers array: ' + (window.ethereum.providers ? window.ethereum.providers.length : 'none'));
+    // look for any BridgeKey-specific flag
+    const keys = Object.keys(window.ethereum).filter(k => /bridge/i.test(k));
+    log('  bridge-related keys on window.ethereum: ' + JSON.stringify(keys));
+  } else {
+    log('✗ window.ethereum does NOT exist');
+  }
+
+  // Check 2: any window property containing "bridge" (case-insensitive)
+  const candidateKeys = Object.keys(window).filter(k => /bridge/i.test(k));
+  log('\nwindow keys containing "bridge": ' + JSON.stringify(candidateKeys));
+
+  // Check 2b: dump ALL non-default window keys, in case the injected name
+  // is unrelated to "bridge" or "ethereum" entirely. We diff against a
+  // fresh iframe's window to filter out normal browser globals.
+  const cleanFrame = document.createElement('iframe');
+  cleanFrame.style.display = 'none';
+  document.body.appendChild(cleanFrame);
+  const defaultKeys = new Set(Object.keys(cleanFrame.contentWindow));
+  document.body.removeChild(cleanFrame);
+  const extraKeys = Object.keys(window).filter(k => !defaultKeys.has(k));
+  log('\nAll non-default window keys (possible injected globals): ' + JSON.stringify(extraKeys));
+
+  // Check 3: EIP-6963 multi-wallet discovery (modern standard)
+  const found = [];
+  window.addEventListener('eip6963:announceProvider', (event) => {
+    found.push(event.detail);
+    log('\n✓ EIP-6963 announced a provider:');
+    log('  name: ' + event.detail.info.name);
+    log('  rdns: ' + event.detail.info.rdns);
+    log('  uuid: ' + event.detail.info.uuid);
+  });
+  window.dispatchEvent(new Event('eip6963:requestProvider'));
+
+  await new Promise((r) => setTimeout(r, 800));
+  if (found.length === 0) {
+    log('\n✗ No EIP-6963 providers announced themselves within 800ms');
+  }
+
+  log('\n--- Try connecting via window.ethereum (if present) ---');
+  if (window.ethereum) {
+    try {
+      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      log('✓ eth_requestAccounts succeeded: ' + JSON.stringify(accounts));
+      const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+      log('  current chainId: ' + chainId);
+    } catch (err) {
+      log('✗ eth_requestAccounts failed: ' + err.message);
+    }
+  }
+});
+</script>
+</body>
+</html>

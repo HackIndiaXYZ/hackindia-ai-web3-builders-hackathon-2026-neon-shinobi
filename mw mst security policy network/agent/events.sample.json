@@ -1,0 +1,29 @@
+[
+  {
+    "eventId": "evt-001",
+    "sourceSegment": "Guest",
+    "destSegment": "Finance",
+    "protocol": "TCP",
+    "port": 3306,
+    "observation": "Device on Guest network attempted a connection to a host on the Finance segment.",
+    "detectedBy": "Zero Trust Platform (simulated)"
+  },
+  {
+    "eventId": "evt-002",
+    "sourceSegment": "IoT",
+    "destSegment": "Corporate",
+    "protocol": "TCP",
+    "port": 22,
+    "observation": "IoT device attempted SSH access to a Corporate segment host.",
+    "detectedBy": "Zero Trust Platform (simulated)"
+  },
+  {
+    "eventId": "evt-003",
+    "sourceSegment": "Corporate",
+    "destSegment": "Corporate",
+    "protocol": "TCP",
+    "port": 443,
+    "observation": "Routine internal HTTPS traffic within Corporate segment.",
+    "detectedBy": "Zero Trust Platform (simulated)"
+  }
+]

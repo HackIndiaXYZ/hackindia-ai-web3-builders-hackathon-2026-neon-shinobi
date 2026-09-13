@@ -1,0 +1,68 @@
+{
+  "0xbaef804ae0c8c4c00f38a6ff5ae94af6dc5cfdf851e90363ffcffbf33a986c2c": {
+    "payload": {
+      "sourceSegment": "Guest",
+      "destSegment": "Finance",
+      "protocol": "TCP",
+      "port": 3306,
+      "action": "DENY",
+      "risk": "HIGH",
+      "reason": "Guest network must not reach Finance DB directly"
+    },
+    "policyHash": "0x0354ca3f6c840fffd0f2e91fa091feb7492a3f3f67714e72c3f4014f095e75bd",
+    "proposeTx": "0xcffd7c49108c587c51dcc1924ad4b51e2989985aefc04a2c8554d8081afe394b",
+    "approveTx": "0xc016dcbdc177fcc34d6e019b8ff14b345fd34e90c3b65a60d2706c1aa73d687f",
+    "createdAt": "2026-09-12T10:18:34.004Z",
+    "approvedAt": "2026-09-12T10:19:00.015Z"
+  },
+  "0xf76250108a5698bb3072612878a060947c709de0794cac34f9941457e6ef2a4c": {
+    "payload": {
+      "sourceSegment": "Guest",
+      "destSegment": "Finance",
+      "protocol": "TCP",
+      "port": 3306,
+      "action": "DENY",
+      "risk": "HIGH",
+      "reason": "Guest network must not reach the Finance database directly"
+    },
+    "policyHash": "0x1f93c4e55a9e0cf52c839cc24f469cb06c6259549d223f678412b2635fcc8791",
+    "proposeTx": "0x7c7fa5db514ae9b2b8b03d90e381ef80d3d5a5d64ee63b9072e4bc898e74b1ae",
+    "approveTx": "0x6d3cd1b4aee03851456916b786b2cb3953d90bd4744a4e0931462129f1cdfccb",
+    "createdAt": "2026-09-12T10:28:05.033Z",
+    "approvedAt": "2026-09-12T12:45:22.065Z"
+  },
+  "0x6fe1d9a006f2f96093af94ee6e0795022b6ec9d687764b000819b148924e4a6c": {
+    "protocolVersion": 2,
+    "payload": {
+      "sourceSegment": "Guest",
+      "destSegment": "Finance",
+      "protocol": "TCP",
+      "port": 3306,
+      "action": "DENY",
+      "risk": "HIGH",
+      "expiresAt": 0,
+      "reason": "Guest network must not reach the Finance database directly"
+    },
+    "policyHash": "0x67e422540e76b93700cbe8b1aa8324b81b278f3b4d2402186576d2320e60e216",
+    "version": 1,
+    "proposeTx": "0x8aa9eb27b81449fc111aedea2e075908eb8286ac035ef8a53f58b93d99258d91",
+    "createdAt": "2026-09-12T20:19:40.037Z"
+  },
+  "0x129c3741178ac173de9a9714e698c5189e5b935b6eb05f4422d3e0dceae36dbf": {
+    "protocolVersion": 2,
+    "payload": {
+      "sourceSegment": "Guest",
+      "destSegment": "Finance",
+      "protocol": "TCP",
+      "port": 3306,
+      "action": "DENY",
+      "risk": "HIGH",
+      "expiresAt": 0,
+      "reason": "Guest network must not reach the Finance database directly"
+    },
+    "policyHash": "0x67e422540e76b93700cbe8b1aa8324b81b278f3b4d2402186576d2320e60e216",
+    "version": 1,
+    "proposeTx": "0x0c8c49143410f05e62d532c7d082c10bcea3f3055c6a1d0016235accc58ad692",
+    "createdAt": "2026-09-12T23:36:50.018Z"
+  }
+}
